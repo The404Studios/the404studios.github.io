@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zombie Survival</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #111;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        #game-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #ui-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+        }
+        #player-stats {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        #chat-box {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            width: 300px;
+            height: 150px;
+            overflow-y: auto;
+        }
+        #chat-input {
+            width: 280px;
+            padding: 5px;
+            background-color: rgba(30, 30, 30, 0.8);
+            color: #fff;
+            border: 1px solid #444;
+            border-radius: 3px;
+            margin-top: 5px;
+        }
+        #players-online {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #game-over {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        #restart-button {
+            background-color: #900;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div id="ui-overlay">
+            <div id="player-stats">
+                Health: <span id="health">100</span> | 
+                Ammo: <span id="ammo">30</span> | 
+                Score: <span id="score">0</span>
+            </div>
+            <div id="chat-box"></div>
+            <input type="text" id="chat-input" placeholder="Type message and press Enter">
+        </div>
+        <div id="players-online">
+            Players Online: <span id="player-count">1</span>
+        </div>
+        <div id="game-over">
+            <h2>Game Over</h2>
+            <p>Your score: <span id="final-score">0</span></p>
+            <button id="restart-button">Restart</button>
+        </div>
+    </div>
+
+    <script>
+        // Game Constants
+        const ZOMBIE_SPEED = 1.2;
+        const PLAYER_SPEED = 3;
+        const BULLET_SPEED = 10;
+        
+        // Session Management
+        function generateSessionId() {
+            return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        }
+        
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/";
+        }
+        
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+        
+        // Check if player has a session, otherwise create one
+        let playerId = getCookie("zombieGamePlayerId");
+        if (!playerId) {
+            playerId = generateSessionId();
+            setCookie("zombieGamePlayerId", playerId, 7);
+        }
+        
+        // Game Variables
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        // Resize handler
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+        
+        // Game state
+        let player = {
+            id: playerId,
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 20,
+            health: 100,
+            ammo: 30,
+            score: 0,
+            color: '#' + Math.floor(Math.random() * 16777215).toString(16), // Random color
+            angle: 0,
+            lastShot: 0
+        };
+        
+        let otherPlayers = {};
+        let zombies = [];
+        let bullets = [];
+        let lastUpdate = Date.now();
+        
+        // Multiplayer Connection Setup
+        const serverUrl = 'https://the404studios.github.io/';
+        let socket;
+        
+        function connectToServer() {
+            try {
+                // Using a WebSocket connection if the server supports it
+                socket = new WebSocket(serverUrl.replace('https://', 'wss://'));
+                
+                socket.onopen = function() {
+                    console.log('Connected to game server');
+                    sendPlayerData();
+                };
+                
+                socket.onmessage = function(event) {
+                    processServerMessage(JSON.parse(event.data));
+                };
+                
+                socket.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                    // Fallback to polling if WebSocket fails
+                    setupPolling();
+                };
+                
+                socket.onclose = function() {
+                    console.log('Disconnected from game server');
+                    setTimeout(connectToServer, 5000); // Try to reconnect
+                };
+            } catch (error) {
+                console.error('Connection error:', error);
+                setupPolling();
+            }
+        }
+        
+        function setupPolling() {
+            console.log('Setting up polling as fallback');
+            // Poll for updates every 100ms
+            setInterval(sendPlayerData, 100);
+            setInterval(getGameState, 100);
+        }
+        
+        function sendPlayerData() {
+            const playerData = {
+                action: 'updatePlayer',
+                player: {
+                    id: player.id,
+                    x: player.x,
+                    y: player.y,
+                    angle: player.angle,
+                    health: player.health,
+                    score: player.score,
+                    color: player.color
+                }
+            };
+            
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify(playerData));
+            } else {
+                // Fallback to HTTP POST if WebSocket is not available
+                fetch(serverUrl + '/api/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(playerData)
+                }).catch(error => console.error('Error sending player data:', error));
+            }
+        }
+        
+        function getGameState() {
+            fetch(serverUrl + '/api/gameState')
+                .then(response => response.json())
+                .then(data => processServerMessage(data))
+                .catch(error => console.error('Error getting game state:', error));
+        }
+        
+        function processServerMessage(message) {
+            if (message.players) {
+                updatePlayers(message.players);
+            }
+            
+            if (message.zombies) {
+                updateZombies(message.zombies);
+            }
+            
+            if (message.bullets) {
+                updateBullets(message.bullets);
+            }
+            
+            if (message.chat) {
+                addChatMessage(message.chat);
+            }
+        }
+        
+        function updatePlayers(players) {
+            document.getElementById('player-count').textContent = Object.keys(players).length;
+            
+            otherPlayers = {};
+            for (const id in players) {
+                if (id !== player.id) {
+                    otherPlayers[id] = players[id];
+                }
+            }
+        }
+        
+        function updateZombies(serverZombies) {
+            // Only update zombies if server is managing them
+            if (serverZombies.length > 0) {
+                zombies = serverZombies;
+            }
+        }
+        
+        function updateBullets(serverBullets) {
+            // Add new bullets from server
+            serverBullets.forEach(bullet => {
+                if (bullet.playerId !== player.id) {
+                    const exists = bullets.some(b => b.id === bullet.id);
+                    if (!exists) {
+                        bullets.push(bullet);
+                    }
+                }
+            });
+        }
+        
+        // Attempt to connect
+        connectToServer();
+        
+        // Input Handling
+        const keys = {};
+        
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            
+            // Chat handling
+            if (e.key === 'Enter') {
+                const chatInput = document.getElementById('chat-input');
+                if (document.activeElement === chatInput && chatInput.value.trim() !== '') {
+                    sendChatMessage(chatInput.value);
+                    chatInput.value = '';
+                } else if (document.activeElement !== chatInput) {
+                    chatInput.focus();
+                }
+            }
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+        
+        window.addEventListener('mousemove', (e) => {
+            const dx = e.clientX - player.x;
+            const dy = e.clientY - player.y;
+            player.angle = Math.atan2(dy, dx);
+        });
+        
+        window.addEventListener('click', (e) => {
+            if (player.ammo > 0 && Date.now() - player.lastShot > 300) { // Rate limiting
+                shootBullet();
+                player.lastShot = Date.now();
+                player.ammo--;
+                updateUI();
+                
+                // Send bullet to server for other players
+                const bulletData = {
+                    action: 'shoot',
+                    bullet: bullets[bullets.length - 1]
+                };
+                
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify(bulletData));
+                } else {
+                    fetch(serverUrl + '/api/shoot', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(bulletData)
+                    }).catch(error => console.error('Error sending bullet data:', error));
+                }
+            }
+        });
+        
+        function shootBullet() {
+            const bullet = {
+                id: player.id + '-' + Date.now(),
+                x: player.x,
+                y: player.y,
+                angle: player.angle,
+                speed: BULLET_SPEED,
+                radius: 5,
+                playerId: player.id
+            };
+            bullets.push(bullet);
+        }
+        
+        function sendChatMessage(message) {
+            const chatData = {
+                action: 'chat',
+                message: {
+                    playerId: player.id,
+                    text: message,
+                    timestamp: Date.now()
+                }
+            };
+            
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify(chatData));
+            } else {
+                fetch(serverUrl + '/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(chatData)
+                }).catch(error => console.error('Error sending chat message:', error));
+            }
+            
+            // Add message locally
+            addChatMessage({
+                playerId: player.id,
+                text: message,
+                timestamp: Date.now()
+            });
+        }
+        
+        function addChatMessage(message) {
+            const chatBox = document.getElementById('chat-box');
+            const playerColor = message.playerId === player.id ? player.color : (otherPlayers[message.playerId]?.color || '#ffffff');
+            
+            const messageElement = document.createElement('div');
+            messageElement.innerHTML = `<span style="color: ${playerColor}">Player ${message.playerId.substring(0, 5)}</span>: ${message.text}`;
+            chatBox.appendChild(messageElement);
+            
+            // Auto-scroll to bottom
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+        
+        // Game Logic
+        function spawnZombie() {
+            // Spawn zombies from outside the screen
+            let x, y;
+            const side = Math.floor(Math.random() * 4);
+            
+            switch(side) {
+                case 0: // Top
+                    x = Math.random() * canvas.width;
+                    y = -50;
+                    break;
+                case 1: // Right
+                    x = canvas.width + 50;
+                    y = Math.random() * canvas.height;
+                    break;
+                case 2: // Bottom
+                    x = Math.random() * canvas.width;
+                    y = canvas.height + 50;
+                    break;
+                case 3: // Left
+                    x = -50;
+                    y = Math.random() * canvas.height;
+                    break;
+            }
+            
+            zombies.push({
+                x: x,
+                y: y,
+                radius: 20,
+                health: 100,
+                speed: ZOMBIE_SPEED * (0.8 + Math.random() * 0.4), // Some variation
+                color: '#8BC34A' // Zombie green
+            });
+        }
+        
+        // Spawn a zombie every 2 seconds
+        setInterval(spawnZombie, 2000);
+        
+        // Ammo regeneration
+        setInterval(() => {
+            if (player.ammo < 30) {
+                player.ammo++;
+                updateUI();
+            }
+        }, 3000);
+        
+        function updateUI() {
+            document.getElementById('health').textContent = player.health;
+            document.getElementById('ammo').textContent = player.ammo;
+            document.getElementById('score').textContent = player.score;
+        }
+        
+        function gameOver() {
+            document.getElementById('final-score').textContent = player.score;
+            document.getElementById('game-over').style.display = 'block';
+        }
+        
+        document.getElementById('restart-button').addEventListener('click', () => {
+            // Reset player
+            player.health = 100;
+            player.ammo = 30;
+            player.score = 0;
+            player.x = canvas.width / 2;
+            player.y = canvas.height / 2;
+            
+            // Clear zombies
+            zombies = [];
+            
+            // Hide game over screen
+            document.getElementById('game-over').style.display = 'none';
+            
+            // Update UI
+            updateUI();
+        });
+        
+        // Game Loop
+        function update() {
+            const now = Date.now();
+            const dt = (now - lastUpdate) / 1000; // Time in seconds
+            lastUpdate = now;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Only move player if alive
+            if (player.health > 0) {
+                // Player movement
+                let dx = 0;
+                let dy = 0;
+                
+                if (keys['w'] || keys['ArrowUp']) dy -= PLAYER_SPEED;
+                if (keys['s'] || keys['ArrowDown']) dy += PLAYER_SPEED;
+                if (keys['a'] || keys['ArrowLeft']) dx -= PLAYER_SPEED;
+                if (keys['d'] || keys['ArrowRight']) dx += PLAYER_SPEED;
+                
+                // Normalize diagonal movement
+                if (dx !== 0 && dy !== 0) {
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    dx = dx / length * PLAYER_SPEED;
+                    dy = dy / length * PLAYER_SPEED;
+                }
+                
+                // Update player position
+                player.x += dx;
+                player.y += dy;
+                
+                // Keep player in bounds
+                player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
+                player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
+            }
+            
+            // Update bullets
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                bullet.x += Math.cos(bullet.angle) * bullet.speed;
+                bullet.y += Math.sin(bullet.angle) * bullet.speed;
+                
+                // Remove bullets that are out of bounds
+                if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
+                    bullets.splice(i, 1);
+                    continue;
+                }
+                
+                // Check bullet collisions with zombies
+                for (let j = zombies.length - 1; j >= 0; j--) {
+                    const zombie = zombies[j];
+                    const dx = bullet.x - zombie.x;
+                    const dy = bullet.y - zombie.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < bullet.radius + zombie.radius) {
+                        zombie.health -= 25; // Bullet damage
+                        
+                        // Remove bullet
+                        bullets.splice(i, 1);
+                        
+                        // Check if zombie is dead
+                        if (zombie.health <= 0) {
+                            zombies.splice(j, 1);
+                            if (bullet.playerId === player.id) {
+                                player.score += 10;
+                                updateUI();
+                            }
+                        }
+                        
+                        break;
+                    }
+                }
+            }
+            
+            // Update zombies
+            for (let i = 0; i < zombies.length; i++) {
+                const zombie = zombies[i];
+                
+                // Move zombies toward player
+                let targetX = player.x;
+                let targetY = player.y;
+                
+                // If player is dead, find nearest living player
+                if (player.health <= 0) {
+                    let nearestPlayer = null;
+                    let minDistance = Infinity;
+                    
+                    for (const id in otherPlayers) {
+                        const p = otherPlayers[id];
+                        const dx = zombie.x - p.x;
+                        const dy = zombie.y - p.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            nearestPlayer = p;
+                        }
+                    }
+                    
+                    if (nearestPlayer) {
+                        targetX = nearestPlayer.x;
+                        targetY = nearestPlayer.y;
+                    }
+                }
+                
+                const dx = targetX - zombie.x;
+                const dy = targetY - zombie.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 0) {
+                    zombie.x += dx / distance * zombie.speed;
+                    zombie.y += dy / distance * zombie.speed;
+                }
+                
+                // Check zombie collisions with player
+                if (player.health > 0) {
+                    const pDx = player.x - zombie.x;
+                    const pDy = player.y - zombie.y;
+                    const pDistance = Math.sqrt(pDx * pDx + pDy * pDy);
+                    
+                    if (pDistance < player.radius + zombie.radius) {
+                        player.health -= 1; // Zombie damage per frame
+                        updateUI();
+                        
+                        if (player.health <= 0) {
+                            gameOver();
+                        }
+                    }
+                }
+            }
+            
+            // Drawing
+            
+            // Draw other players
+            for (const id in otherPlayers) {
+                const p = otherPlayers[id];
+                
+                // Player body
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 20, 0, Math.PI * 2);
+                ctx.fillStyle = p.color || '#cccccc';
+                ctx.fill();
+                
+                // Player direction
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(p.x + Math.cos(p.angle) * 30, p.y + Math.sin(p.angle) * 30);
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+            
+            // Draw player
+            if (player.health > 0) {
+                // Player body
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+                ctx.fillStyle = player.color;
+                ctx.fill();
+                
+                // Player direction
+                ctx.beginPath();
+                ctx.moveTo(player.x, player.y);
+                ctx.lineTo(player.x + Math.cos(player.angle) * 30, player.y + Math.sin(player.angle) * 30);
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+            
+            // Draw zombies
+            zombies.forEach(zombie => {
+                ctx.beginPath();
+                ctx.arc(zombie.x, zombie.y, zombie.radius, 0, Math.PI * 2);
+                
+                // Color transition based on health
+                const healthPercent = zombie.health / 100;
+                const r = Math.floor(139 * healthPercent);
+                const g = Math.floor(195 * healthPercent);
+                const b = Math.floor(74 * healthPercent);
+                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                
+                ctx.fill();
+            });
+            
+            // Draw bullets
+            bullets.forEach(bullet => {
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffcc00';
+                ctx.fill();
+            });
+            
+            // Continue game loop
+            requestAnimationFrame(update);
+        }
+        
+        // Start game
+        update();
+    </script>
+</body>
+</html>
