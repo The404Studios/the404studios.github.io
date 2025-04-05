@@ -819,6 +819,8 @@
         let bullets = [];
         let lastUpdate = Date.now();
         let lastPlayerUpdate = Date.now();
+        let lastZombieUpdate = Date.now();
+        let lastBulletUpdate = Date.now();
         let canvas, ctx;
         let keys = {};
         let isMobile = false;
@@ -863,6 +865,14 @@
             // Set up event listeners
             setupEventListeners();
             
+            // Load existing chat messages if any
+            loadExistingChatMessages();
+            
+            // Load existing zombies if not host
+            if (!isHost) {
+                loadExistingZombies();
+            }
+            
             // Start game loop
             requestAnimationFrame(update);
             
@@ -878,6 +888,24 @@
                     updateUI();
                 }
             }, 3000);
+        }
+        
+        // Load existing chat messages from room
+        function loadExistingChatMessages() {
+            const roomData = JSON.parse(localStorage.getItem('zombieGame') || '{}');
+            if (roomData[roomCode] && Array.isArray(roomData[roomCode].chat)) {
+                roomData[roomCode].chat.forEach(msg => {
+                    addChatMessage(msg, false); // Don't save again to localStorage
+                });
+            }
+        }
+        
+        // Load existing zombies from room
+        function loadExistingZombies() {
+            const roomData = JSON.parse(localStorage.getItem('zombieGame') || '{}');
+            if (roomData[roomCode] && Array.isArray(roomData[roomCode].zombies) && roomData[roomCode].zombies.length > 0) {
+                zombies = roomData[roomCode].zombies;
+            }
         }
         
         // Connect to multiplayer server
@@ -975,12 +1003,33 @@
                 updatePlayers(message.players);
             }
             
-            if (!isHost && message.zombies) {
+            if (!isHost && message.zombies && Array.isArray(message.zombies)) {
                 updateZombies(message.zombies);
             }
             
             if (message.bullets) {
                 updateBullets(message.bullets);
+            }
+            
+            // Process chat messages
+            if (message.chat && Array.isArray(message.chat)) {
+                // Process any new chat messages
+                message.chat.forEach(chatMsg => {
+                    // Check if this message is already in the chat box
+                    const chatBox = document.getElementById('chat-box');
+                    let messageExists = false;
+                    
+                    // Simple check to see if this exact message already exists
+                    Array.from(chatBox.children).forEach(msgElement => {
+                        if (msgElement.getAttribute('data-id') === chatMsg.playerId + chatMsg.timestamp) {
+                            messageExists = true;
+                        }
+                    });
+                    
+                    if (!messageExists && chatMsg.playerId !== player.id) {
+                        addChatMessage(chatMsg, false); // Don't save to localStorage to avoid loops
+                    }
+                });
             }
         }
         
@@ -1325,6 +1374,9 @@
             const roomData = JSON.parse(localStorage.getItem('zombieGame') || '{}');
             
             if (roomData[roomCode]) {
+                if (!Array.isArray(roomData[roomCode].zombies)) {
+                    roomData[roomCode].zombies = [];
+                }
                 roomData[roomCode].zombies = zombies;
                 localStorage.setItem('zombieGame', JSON.stringify(roomData));
             }
@@ -1465,6 +1517,8 @@
                         
                         // Check if zombie is dead
                         if (zombie.health <= 0) {
+                            // Remove zombie
+                            const zombieId = zombie.id;
                             zombies.splice(j, 1);
                             
                             // Award points to shooter
@@ -1472,11 +1526,49 @@
                                 player.score += 10;
                                 updateUI();
                             }
+                            
+                            // If host, update zombies to notify others about the kill
+                            if (isHost) {
+                                const roomData = JSON.parse(localStorage.getItem('zombieGame') || '{}');
+                                if (roomData[roomCode]) {
+                                    roomData[roomCode].zombies = zombies;
+                                    localStorage.setItem('zombieGame', JSON.stringify(roomData));
+                                }
+                            }
                         }
                         
                         break;
                     }
                 }
+            }
+            
+            // Update bullets in localStorage
+            if (bullets.length > 0 && Date.now() - lastBulletUpdate > 100) { // Update every 100ms
+                const roomData = JSON.parse(localStorage.getItem('zombieGame') || '{}');
+                if (roomData[roomCode]) {
+                    if (!Array.isArray(roomData[roomCode].bullets)) {
+                        roomData[roomCode].bullets = [];
+                    }
+                    
+                    // Add any new bullets
+                    bullets.forEach(bullet => {
+                        if (bullet.playerId === player.id) {
+                            // Check if bullet is already in the list
+                            const bulletExists = roomData[roomCode].bullets.some(b => b.id === bullet.id);
+                            if (!bulletExists) {
+                                roomData[roomCode].bullets.push(bullet);
+                            }
+                        }
+                    });
+                    
+                    // Clean up old bullets
+                    if (roomData[roomCode].bullets.length > 50) {
+                        roomData[roomCode].bullets = roomData[roomCode].bullets.slice(-50);
+                    }
+                    
+                    localStorage.setItem('zombieGame', JSON.stringify(roomData));
+                }
+                lastBulletUpdate = Date.now();
             }
         }
         
@@ -1515,12 +1607,12 @@
                         // If no living players, zombies wander randomly
                         if (!zombie.wanderAngle) {
                             zombie.wanderAngle = Math.random() * Math.PI * 2;
-                            zombie.wanderTime = now + 2000; // Change direction every 2 seconds
+                            zombie.wanderTime = Date.now() + 2000; // Change direction every 2 seconds
                         }
                         
-                        if (now > zombie.wanderTime) {
+                        if (Date.now() > zombie.wanderTime) {
                             zombie.wanderAngle = Math.random() * Math.PI * 2;
-                            zombie.wanderTime = now + 2000;
+                            zombie.wanderTime = Date.now() + 2000;
                         }
                         
                         targetX = zombie.x + Math.cos(zombie.wanderAngle) * 100;
@@ -1557,6 +1649,16 @@
                         }
                     }
                 }
+            }
+            
+            // If host, update zombies in localStorage
+            if (isHost && Date.now() - lastZombieUpdate > 100) { // Update every 100ms to reduce writes
+                const roomData = JSON.parse(localStorage.getItem('zombieGame') || '{}');
+                if (roomData[roomCode]) {
+                    roomData[roomCode].zombies = zombies;
+                    localStorage.setItem('zombieGame', JSON.stringify(roomData));
+                }
+                lastZombieUpdate = Date.now();
             }
         }
         
