@@ -821,6 +821,7 @@
         let lastPlayerUpdate = Date.now();
         let lastZombieUpdate = Date.now();
         let lastBulletUpdate = Date.now();
+        let lastServerPoll = Date.now();
         let canvas, ctx;
         let keys = {};
         let isMobile = false;
@@ -983,6 +984,19 @@
             roomData[roomCode].players[player.id] = playerData.player;
             roomData[roomCode].lastUpdate = Date.now();
             
+            // If host, make sure to update zombie positions accurately
+            if (isHost) {
+                roomData[roomCode].zombies = zombies.map(zombie => ({
+                    id: zombie.id,
+                    x: zombie.x,
+                    y: zombie.y,
+                    radius: zombie.radius,
+                    health: zombie.health,
+                    speed: zombie.speed,
+                    color: zombie.color
+                }));
+            }
+            
             localStorage.setItem('zombieGame', JSON.stringify(roomData));
         }
         
@@ -1047,20 +1061,45 @@
         
         // Update zombies from host
         function updateZombies(serverZombies) {
-            if (!isHost && serverZombies.length > 0) {
-                zombies = serverZombies;
+            if (!isHost && Array.isArray(serverZombies) && serverZombies.length > 0) {
+                // Create a map of existing zombies by ID for quick lookup
+                const existingZombieMap = {};
+                zombies.forEach(zombie => {
+                    existingZombieMap[zombie.id] = zombie;
+                });
+                
+                // Update zombies from server, keeping non-position properties
+                zombies = serverZombies.map(serverZombie => {
+                    if (existingZombieMap[serverZombie.id]) {
+                        // Preserve any local properties we want to keep
+                        const existingZombie = existingZombieMap[serverZombie.id];
+                        return {
+                            ...serverZombie,
+                            // Keep any properties not in the server data
+                            wanderAngle: existingZombie.wanderAngle,
+                            wanderTime: existingZombie.wanderTime
+                        };
+                    } else {
+                        // New zombie from server
+                        return serverZombie;
+                    }
+                });
             }
         }
         
         // Update bullets from other players
         function updateBullets(serverBullets) {
             if (Array.isArray(serverBullets)) {
+                // Create a map of existing bullets by ID for quick lookup
+                const existingBulletMap = {};
+                bullets.forEach(bullet => {
+                    existingBulletMap[bullet.id] = true;
+                });
+                
+                // Add new bullets from server data
                 serverBullets.forEach(bullet => {
-                    if (bullet.playerId !== player.id) {
-                        const exists = bullets.some(b => b.id === bullet.id);
-                        if (!exists) {
-                            bullets.push(bullet);
-                        }
+                    if (bullet.playerId !== player.id && !existingBulletMap[bullet.id]) {
+                        bullets.push(bullet);
                     }
                 });
             }
@@ -1301,13 +1340,14 @@
         // Shoot a bullet
         function shootBullet() {
             const bullet = {
-                id: player.id + '-' + Date.now(),
+                id: player.id + '-' + Date.now() + '-' + Math.random().toString(36).substring(2, 5),
                 x: player.x,
                 y: player.y,
                 angle: player.angle,
                 speed: BULLET_SPEED,
                 radius: 5,
-                playerId: player.id
+                playerId: player.id,
+                timestamp: Date.now()
             };
             
             bullets.push(bullet);
@@ -1319,6 +1359,11 @@
                 if (!roomData[roomCode].bullets) {
                     roomData[roomCode].bullets = [];
                 }
+                
+                // Find and remove old bullets from the same player to avoid memory build-up
+                roomData[roomCode].bullets = roomData[roomCode].bullets.filter(b => 
+                    !(b.playerId === player.id && Date.now() - b.timestamp > 2000)
+                );
                 
                 roomData[roomCode].bullets.push(bullet);
                 
@@ -1446,17 +1491,60 @@
             // Send periodic updates to server
             if (now - lastPlayerUpdate > SERVER_UPDATE_RATE) {
                 sendPlayerData();
-                
-                // If host, also update zombies
-                if (isHost) {
-                    const roomData = JSON.parse(localStorage.getItem('zombieGame') || '{}');
-                    if (roomData[roomCode]) {
-                        roomData[roomCode].zombies = zombies;
+                lastPlayerUpdate = now;
+            }
+            
+            // Sync zombies if host
+            if (isHost && now - lastZombieUpdate > 50) { // Update every 50ms
+                const roomData = JSON.parse(localStorage.getItem('zombieGame') || '{}');
+                if (roomData[roomCode]) {
+                    roomData[roomCode].zombies = zombies.map(zombie => ({
+                        id: zombie.id,
+                        x: zombie.x,
+                        y: zombie.y,
+                        radius: zombie.radius,
+                        health: zombie.health,
+                        speed: zombie.speed,
+                        color: zombie.color
+                    }));
+                    localStorage.setItem('zombieGame', JSON.stringify(roomData));
+                }
+                lastZombieUpdate = now;
+            }
+            
+            // Sync bullets if any added or updated
+            if (bullets.length > 0 && now - lastBulletUpdate > 50) { // Update every 50ms
+                const roomData = JSON.parse(localStorage.getItem('zombieGame') || '{}');
+                if (roomData[roomCode]) {
+                    // Find bullets from this player and update them
+                    const updatedBullets = [];
+                    const myBullets = bullets.filter(b => b.playerId === player.id);
+                    
+                    if (myBullets.length > 0) {
+                        // First, get all bullets from other players
+                        const otherBullets = roomData[roomCode].bullets 
+                            ? roomData[roomCode].bullets.filter(b => b.playerId !== player.id)
+                            : [];
+                        
+                        // Then add updated positions of our bullets
+                        updatedBullets.push(...otherBullets, ...myBullets);
+                        
+                        // Remove any bullets that are too old
+                        const currentBullets = updatedBullets.filter(b => 
+                            !b.timestamp || now - b.timestamp < 3000
+                        );
+                        
+                        roomData[roomCode].bullets = currentBullets;
                         localStorage.setItem('zombieGame', JSON.stringify(roomData));
                     }
                 }
-                
-                lastPlayerUpdate = now;
+                lastBulletUpdate = now;
+            }
+            
+            // Poll server for updates
+            if (now - lastServerPoll > 100) { // Poll every 100ms
+                getGameState();
+                lastServerPoll = now;
             }
             
             // Continue game loop
