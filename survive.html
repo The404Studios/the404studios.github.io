@@ -3,63 +3,344 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zombie Survival</title>
+    <title>Zombie Apocalypse - Multiplayer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body {
+        :root {
+            --primary-color: #3c9e41;
+            --primary-dark: #2c7e31;
+            --accent-color: #ff3e3e;
+            --dark-bg: #121212;
+            --medium-bg: #222222;
+            --light-bg: #333333;
+            --text-light: #ffffff;
+            --text-dark: #111111;
+        }
+        
+        * {
             margin: 0;
             padding: 0;
-            background-color: #111;
-            color: #fff;
-            font-family: 'Courier New', monospace;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
             overflow: hidden;
         }
+        
+        /* Start Screen */
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.95)), url('https://the404studios.github.io/zombieBackground.jpg') center/cover no-repeat;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .game-title {
+            font-family: 'Creepster', cursive;
+            font-size: 5rem;
+            color: var(--accent-color);
+            text-shadow: 0 0 10px rgba(255,0,0,0.5);
+            margin-bottom: 1rem;
+            letter-spacing: 2px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { text-shadow: 0 0 10px rgba(255,0,0,0.5); }
+            50% { text-shadow: 0 0 20px rgba(255,0,0,0.8); }
+            100% { text-shadow: 0 0 10px rgba(255,0,0,0.5); }
+        }
+        
+        .subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 3rem;
+            color: #aaa;
+        }
+        
+        .menu-container {
+            background-color: rgba(34, 34, 34, 0.9);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid #444;
+        }
+        
+        .menu-tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #444;
+        }
+        
+        .menu-tab {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            flex: 1;
+            text-align: center;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-tab.active {
+            border-bottom: 3px solid var(--primary-color);
+            font-weight: bold;
+        }
+        
+        .menu-section {
+            display: none;
+        }
+        
+        .menu-section.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #ccc;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background-color: #333;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(60, 158, 65, 0.3);
+        }
+        
+        .button {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 5px;
+            border: none;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 0.5rem;
+        }
+        
+        .button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        .button.accent {
+            background-color: var(--accent-color);
+        }
+        
+        .button.accent:hover {
+            background-color: #e02e2e;
+        }
+        
+        .room-info {
+            background-color: #1a1a1a;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-top: 1.5rem;
+            border: 1px solid #444;
+        }
+        
+        .room-info h3 {
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+        
+        .room-url {
+            background-color: #2a2a2a;
+            padding: 0.75rem;
+            border-radius: 5px;
+            margin: 0.5rem 0;
+            font-family: monospace;
+            word-break: break-all;
+            cursor: pointer;
+            user-select: all;
+        }
+        
+        .controls-info {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: #888;
+            text-align: center;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: auto auto;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            justify-content: center;
+        }
+        
+        .controls-grid div {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .key {
+            background-color: #2a2a2a;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            border: 1px solid #444;
+            font-family: monospace;
+        }
+        
+        /* Game Elements */
         #game-container {
             position: relative;
             width: 100vw;
             height: 100vh;
         }
+        
         #game-canvas {
             position: absolute;
             top: 0;
             left: 0;
+            background-color: var(--dark-bg);
         }
+        
         #ui-overlay {
             position: absolute;
             top: 10px;
             left: 10px;
             z-index: 10;
         }
+        
         #player-stats {
             background-color: rgba(0, 0, 0, 0.7);
-            padding: 10px;
+            padding: 10px 15px;
             border-radius: 5px;
             margin-bottom: 10px;
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            gap: 15px;
+            align-items: center;
         }
-        #chat-box {
+        
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+        }
+        
+        .health-bar {
+            width: 100px;
+            height: 10px;
+            background-color: #333;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .health-fill {
+            height: 100%;
+            background-color: var(--accent-color);
+            width: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        #chat-container {
             background-color: rgba(0, 0, 0, 0.7);
-            padding: 10px;
             border-radius: 5px;
             width: 300px;
+            overflow: hidden;
+        }
+        
+        #chat-box {
             height: 150px;
             overflow-y: auto;
+            padding: 10px;
         }
+        
         #chat-input {
-            width: 280px;
-            padding: 5px;
-            background-color: rgba(30, 30, 30, 0.8);
+            width: 100%;
+            padding: 8px 10px;
+            background-color: rgba(34, 34, 34, 0.9);
             color: #fff;
-            border: 1px solid #444;
-            border-radius: 3px;
-            margin-top: 5px;
+            border: none;
+            border-top: 1px solid #444;
+            font-family: 'Roboto', sans-serif;
         }
+        
+        #chat-input:focus {
+            outline: none;
+        }
+        
+        .chat-message {
+            margin-bottom: 5px;
+            word-wrap: break-word;
+        }
+        
+        .chat-name {
+            font-weight: bold;
+        }
+        
         #players-online {
             position: absolute;
             top: 10px;
             right: 10px;
             background-color: rgba(0, 0, 0, 0.7);
-            padding: 10px;
+            padding: 10px 15px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        #player-count {
+            font-weight: bold;
+        }
+        
+        #room-code-display {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
             border-radius: 5px;
         }
+        
+        #current-room-code {
+            font-weight: bold;
+            font-family: monospace;
+            user-select: all;
+        }
+        
         #game-over {
             display: none;
             position: absolute;
@@ -67,40 +348,250 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background-color: rgba(0, 0, 0, 0.9);
-            padding: 20px;
+            padding: 2rem;
             border-radius: 10px;
             text-align: center;
+            z-index: 20;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+            border: 2px solid var(--accent-color);
         }
+        
+        #game-over h2 {
+            font-family: 'Creepster', cursive;
+            font-size: 3rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+        
         #restart-button {
-            background-color: #900;
+            background-color: var(--accent-color);
             color: white;
             border: none;
             padding: 10px 20px;
             border-radius: 5px;
             cursor: pointer;
-            margin-top: 15px;
+            margin-top: 1.5rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        #restart-button:hover {
+            background-color: #e02e2e;
+            transform: translateY(-2px);
+        }
+        
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        /* Blood splatter effect */
+        .blood-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: radial-gradient(circle, transparent 0%, rgba(0,0,0,0.95) 100%);
+            opacity: 0;
+            z-index: 15;
+            transition: opacity 0.5s;
+        }
+        
+        .blood-overlay:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path fill="red" d="M30,40c0,0,10-10,30-5c0,0,10,5,5,15c0,0-5,10-15,5c0,0-15-10-20-15Z" /></svg>') 0 0 / 100px 100px;
+            opacity: 0.4;
+            filter: blur(2px);
+        }
+        
+        /* Mobile controls */
+        #mobile-controls {
+            display: none;
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            z-index: 20;
+        }
+        
+        .joystick-container {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 120px;
+            height: 120px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+        }
+        
+        .joystick {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+        }
+        
+        .shoot-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            background-color: rgba(255, 0, 0, 0.5);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+        }
+        
+        /* Media Queries */
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 3rem;
+            }
+            .subtitle {
+                font-size: 1rem;
+            }
+            #mobile-controls {
+                display: block;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Start Screen -->
+    <div id="start-screen">
+        <h1 class="game-title">ZOMBIE APOCALYPSE</h1>
+        <p class="subtitle">Multiplayer Survival</p>
+        
+        <div class="menu-container">
+            <div class="menu-tabs">
+                <div class="menu-tab active" data-tab="create">Create Room</div>
+                <div class="menu-tab" data-tab="join">Join Room</div>
+            </div>
+            
+            <!-- Create Room Section -->
+            <div id="create-section" class="menu-section active">
+                <div class="input-group">
+                    <label for="player-name">Your Name</label>
+                    <input type="text" id="player-name" class="input-field" placeholder="Enter your name" maxlength="15">
+                </div>
+                <button id="create-room" class="button">Create New Room</button>
+            </div>
+            
+            <!-- Join Room Section -->
+            <div id="join-section" class="menu-section">
+                <div class="input-group">
+                    <label for="join-name">Your Name</label>
+                    <input type="text" id="join-name" class="input-field" placeholder="Enter your name" maxlength="15">
+                </div>
+                <div class="input-group">
+                    <label for="room-code">Room Code</label>
+                    <input type="text" id="room-code" class="input-field" placeholder="Enter room code" maxlength="6">
+                </div>
+                <button id="join-room" class="button">Join Room</button>
+            </div>
+            
+            <!-- Room Created Section (initially hidden) -->
+            <div id="room-created" class="menu-section">
+                <div class="room-info">
+                    <h3>Room Created!</h3>
+                    <p>Share this code with friends:</p>
+                    <div class="room-url" id="room-code-display-menu"></div>
+                    <button id="copy-code" class="button">Copy Code</button>
+                    <p class="mt-2">Or share this link:</p>
+                    <div class="room-url" id="room-url"></div>
+                    <button id="copy-url" class="button">Copy Link</button>
+                </div>
+                <button id="start-game" class="button accent">Start Game</button>
+            </div>
+            
+            <div class="controls-info">
+                <p>Controls:</p>
+                <div class="controls-grid">
+                    <div><span class="key">W</span> <span>Move Up</span></div>
+                    <div><span class="key">S</span> <span>Move Down</span></div>
+                    <div><span class="key">A</span> <span>Move Left</span></div>
+                    <div><span class="key">D</span> <span>Move Right</span></div>
+                    <div><span class="key">Mouse</span> <span>Aim</span></div>
+                    <div><span class="key">Click</span> <span>Shoot</span></div>
+                    <div><span class="key">Enter</span> <span>Chat</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Container -->
     <div id="game-container">
         <canvas id="game-canvas"></canvas>
+        <div class="blood-overlay" id="blood-overlay"></div>
+        
         <div id="ui-overlay">
             <div id="player-stats">
-                Health: <span id="health">100</span> | 
-                Ammo: <span id="ammo">30</span> | 
-                Score: <span id="score">0</span>
+                <div class="stat">
+                    <span>Health:</span>
+                    <div class="health-bar">
+                        <div class="health-fill" id="health-fill"></div>
+                    </div>
+                    <span class="stat-value" id="health">100</span>
+                </div>
+                <div class="stat">
+                    <span>Ammo:</span>
+                    <span class="stat-value" id="ammo">30</span>
+                </div>
+                <div class="stat">
+                    <span>Score:</span>
+                    <span class="stat-value" id="score">0</span>
+                </div>
             </div>
-            <div id="chat-box"></div>
-            <input type="text" id="chat-input" placeholder="Type message and press Enter">
+            
+            <div id="chat-container">
+                <div id="chat-box"></div>
+                <input type="text" id="chat-input" placeholder="Type message and press Enter">
+            </div>
         </div>
+        
         <div id="players-online">
-            Players Online: <span id="player-count">1</span>
+            <span>Players:</span>
+            <span id="player-count">1</span>
         </div>
+        
+        <div id="room-code-display">
+            <span>Room: </span>
+            <span id="current-room-code"></span>
+        </div>
+        
         <div id="game-over">
             <h2>Game Over</h2>
             <p>Your score: <span id="final-score">0</span></p>
-            <button id="restart-button">Restart</button>
+            <button id="restart-button">Play Again</button>
+        </div>
+        
+        <!-- Mobile Controls (hidden on desktop) -->
+        <div id="mobile-controls">
+            <div class="joystick-container">
+                <div class="joystick" id="joystick"></div>
+            </div>
+            <div class="shoot-button" id="shoot-button">FIRE</div>
         </div>
     </div>
 
@@ -109,12 +600,67 @@
         const ZOMBIE_SPEED = 1.2;
         const PLAYER_SPEED = 3;
         const BULLET_SPEED = 10;
+        const SERVER_UPDATE_RATE = 20; // ms
         
-        // Session Management
+        // DOM Elements
+        const startScreen = document.getElementById('start-screen');
+        const menuTabs = document.querySelectorAll('.menu-tab');
+        const createRoomBtn = document.getElementById('create-room');
+        const joinRoomBtn = document.getElementById('join-room');
+        const startGameBtn = document.getElementById('start-game');
+        const copyUrlBtn = document.getElementById('copy-url');
+        const copyCodeBtn = document.getElementById('copy-code');
+        const roomCreatedSection = document.getElementById('room-created');
+        const roomUrlDisplay = document.getElementById('room-url');
+        const roomCodeDisplayMenu = document.getElementById('room-code-display-menu');
+        const roomCodeInput = document.getElementById('room-code');
+        const playerNameInput = document.getElementById('player-name');
+        const joinNameInput = document.getElementById('join-name');
+        const currentRoomCodeDisplay = document.getElementById('current-room-code');
+        const bloodOverlay = document.getElementById('blood-overlay');
+        const healthFill = document.getElementById('health-fill');
+        
+        // Server URL
+        const serverUrl = 'https://the404studios.github.io';
+        
+        // Tab Navigation
+        menuTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs
+                menuTabs.forEach(t => t.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                tab.classList.add('active');
+                
+                // Hide all sections
+                document.querySelectorAll('.menu-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                // Show corresponding section
+                const tabName = tab.getAttribute('data-tab');
+                document.getElementById(`${tabName}-section`).classList.add('active');
+            });
+        });
+        
+        // Session and Room Variables
+        let playerId = '';
+        let playerName = '';
+        let roomCode = '';
+        let isHost = false;
+        let gameStarted = false;
+
+        // Generate a random room code
+        function generateRoomCode() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+        
+        // Generate a session ID
         function generateSessionId() {
             return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
         }
         
+        // Session Cookie Functions
         function setCookie(name, value, days) {
             let expires = "";
             if (days) {
@@ -136,138 +682,309 @@
             return null;
         }
         
-        // Check if player has a session, otherwise create one
-        let playerId = getCookie("zombieGamePlayerId");
-        if (!playerId) {
+        // Create a new room
+        createRoomBtn.addEventListener('click', () => {
+            playerName = playerNameInput.value.trim() || 'Player';
             playerId = generateSessionId();
-            setCookie("zombieGamePlayerId", playerId, 7);
-        }
-        
-        // Game Variables
-        const canvas = document.getElementById('game-canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        
-        // Resize handler
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            roomCode = generateRoomCode();
+            isHost = true;
+            
+            // Save session information in cookies
+            setCookie('zombieGamePlayerId', playerId, 7);
+            setCookie('zombieGamePlayerName', playerName, 7);
+            setCookie('zombieGameRoomCode', roomCode, 1); // Room code expires in 1 day
+            
+            // Update room URL for sharing
+            const roomUrl = `${window.location.href.split('?')[0]}?room=${roomCode}`;
+            roomUrlDisplay.textContent = roomUrl;
+            roomCodeDisplayMenu.textContent = roomCode;
+            currentRoomCodeDisplay.textContent = roomCode;
+            
+            // Show room created section
+            document.getElementById('create-section').classList.remove('active');
+            document.getElementById('join-section').classList.remove('active');
+            document.getElementById('room-created').classList.add('active');
+            
+            // Update menu tabs
+            menuTabs.forEach(t => t.classList.remove('active'));
         });
         
-        // Game state
-        let player = {
-            id: playerId,
-            x: canvas.width / 2,
-            y: canvas.height / 2,
-            radius: 20,
-            health: 100,
-            ammo: 30,
-            score: 0,
-            color: '#' + Math.floor(Math.random() * 16777215).toString(16), // Random color
-            angle: 0,
-            lastShot: 0
-        };
+        // Copy room URL to clipboard
+        copyUrlBtn.addEventListener('click', () => {
+            const roomUrl = roomUrlDisplay.textContent;
+            navigator.clipboard.writeText(roomUrl).then(() => {
+                copyUrlBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyUrlBtn.textContent = 'Copy Link';
+                }, 2000);
+            });
+        });
         
+        // Copy room code to clipboard
+        copyCodeBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(roomCode).then(() => {
+                copyCodeBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyCodeBtn.textContent = 'Copy Code';
+                }, 2000);
+            });
+        });
+        
+        // Start the game (for host)
+        startGameBtn.addEventListener('click', () => {
+            startScreen.style.display = 'none';
+            gameStarted = true;
+            initGame();
+        });
+        
+        // Join an existing room
+        joinRoomBtn.addEventListener('click', () => {
+            playerName = joinNameInput.value.trim() || 'Player';
+            playerId = generateSessionId();
+            roomCode = roomCodeInput.value.trim().toUpperCase();
+            isHost = false;
+            
+            if (!roomCode) {
+                alert('Please enter a room code');
+                return;
+            }
+            
+            // Save session information in cookies
+            setCookie('zombieGamePlayerId', playerId, 7);
+            setCookie('zombieGamePlayerName', playerName, 7);
+            setCookie('zombieGameRoomCode', roomCode, 1);
+            
+            currentRoomCodeDisplay.textContent = roomCode;
+            
+            // Start the game directly
+            startScreen.style.display = 'none';
+            gameStarted = true;
+            initGame();
+        });
+        
+        // Check URL parameters for room code
+        function checkUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomParam = urlParams.get('room');
+            
+            if (roomParam) {
+                roomCodeInput.value = roomParam;
+                
+                // Switch to join tab
+                menuTabs.forEach(t => {
+                    if (t.getAttribute('data-tab') === 'join') {
+                        t.click();
+                    }
+                });
+            }
+        }
+        
+        // Check for existing session
+        function checkExistingSession() {
+            const savedPlayerId = getCookie('zombieGamePlayerId');
+            const savedPlayerName = getCookie('zombieGamePlayerName');
+            const savedRoomCode = getCookie('zombieGameRoomCode');
+            
+            if (savedPlayerId && savedPlayerName && savedRoomCode) {
+                if (confirm('Resume previous session?')) {
+                    playerId = savedPlayerId;
+                    playerName = savedPlayerName;
+                    roomCode = savedRoomCode;
+                    currentRoomCodeDisplay.textContent = roomCode;
+                    
+                    startScreen.style.display = 'none';
+                    gameStarted = true;
+                    initGame();
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        // Initialize on load
+        window.addEventListener('load', () => {
+            checkUrlParams();
+            if (!checkExistingSession()) {
+                // If no existing session, just show the start screen
+                // It's already visible by default
+            }
+        });
+        
+        // Game Variables
+        let socket;
+        let player;
         let otherPlayers = {};
         let zombies = [];
         let bullets = [];
         let lastUpdate = Date.now();
+        let lastPlayerUpdate = Date.now();
+        let canvas, ctx;
+        let keys = {};
+        let isMobile = false;
         
-        // Multiplayer Connection Setup
-        const serverUrl = 'https://the404studios.github.io/';
-        let socket;
+        // Check if device is mobile
+        function checkMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
         
+        // Initialize the game
+        function initGame() {
+            canvas = document.getElementById('game-canvas');
+            ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // Check if mobile
+            isMobile = checkMobile();
+            
+            // Initialize player
+            player = {
+                id: playerId,
+                name: playerName,
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                radius: 20,
+                health: 100,
+                ammo: 30,
+                score: 0,
+                color: '#' + Math.floor(Math.random() * 16777215).toString(16), // Random color
+                angle: 0,
+                lastShot: 0,
+                isAlive: true
+            };
+            
+            // Update UI
+            updateUI();
+            
+            // Connect to server
+            connectToServer();
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Start game loop
+            requestAnimationFrame(update);
+            
+            // Host-only: start zombie spawning
+            if (isHost) {
+                setInterval(spawnZombie, 2000);
+            }
+            
+            // Set up ammo regeneration
+            setInterval(() => {
+                if (player.ammo < 30) {
+                    player.ammo++;
+                    updateUI();
+                }
+            }, 3000);
+        }
+        
+        // Connect to multiplayer server
         function connectToServer() {
             try {
-                // Using a WebSocket connection if the server supports it
-                socket = new WebSocket(serverUrl.replace('https://', 'wss://'));
+                // Simulate a WebSocket connection (replace with actual WebSocket when available)
+                console.log('Connecting to server...');
                 
-                socket.onopen = function() {
-                    console.log('Connected to game server');
-                    sendPlayerData();
-                };
+                // Add system message
+                addChatMessage({
+                    playerId: 'system',
+                    text: `Connecting to room ${roomCode}...`,
+                    timestamp: Date.now()
+                });
                 
-                socket.onmessage = function(event) {
-                    processServerMessage(JSON.parse(event.data));
-                };
+                // In a real implementation, you would connect to a WebSocket here
+                // For now, we'll simulate the connection with polling
+                setupPolling();
                 
-                socket.onerror = function(error) {
-                    console.error('WebSocket error:', error);
-                    // Fallback to polling if WebSocket fails
-                    setupPolling();
-                };
-                
-                socket.onclose = function() {
-                    console.log('Disconnected from game server');
-                    setTimeout(connectToServer, 5000); // Try to reconnect
-                };
+                // Add connected message after a short delay to simulate connection
+                setTimeout(() => {
+                    addChatMessage({
+                        playerId: 'system',
+                        text: `Connected to room ${roomCode}`,
+                        timestamp: Date.now()
+                    });
+                    sendPlayerData(); // Send initial player data
+                }, 1000);
             } catch (error) {
                 console.error('Connection error:', error);
                 setupPolling();
             }
         }
         
+        // Set up polling for game state updates
         function setupPolling() {
-            console.log('Setting up polling as fallback');
-            // Poll for updates every 100ms
-            setInterval(sendPlayerData, 100);
-            setInterval(getGameState, 100);
+            console.log('Setting up polling for updates');
+            
+            // Poll for updates regularly
+            setInterval(sendPlayerData, SERVER_UPDATE_RATE);
+            setInterval(getGameState, SERVER_UPDATE_RATE);
         }
         
+        // Send player data to server
         function sendPlayerData() {
             const playerData = {
                 action: 'updatePlayer',
+                room: roomCode,
                 player: {
                     id: player.id,
+                    name: player.name,
                     x: player.x,
                     y: player.y,
                     angle: player.angle,
                     health: player.health,
                     score: player.score,
-                    color: player.color
+                    color: player.color,
+                    isAlive: player.health > 0
                 }
             };
             
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify(playerData));
-            } else {
-                // Fallback to HTTP POST if WebSocket is not available
-                fetch(serverUrl + '/api/update', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(playerData)
-                }).catch(error => console.error('Error sending player data:', error));
+            // In a real implementation, you would send this via WebSocket
+            // For now, we'll simulate by storing it in localStorage for demo purposes
+            const roomData = JSON.parse(localStorage.getItem('zombieGame') || '{}');
+            
+            if (!roomData[roomCode]) {
+                roomData[roomCode] = {
+                    players: {},
+                    zombies: isHost ? zombies : [],
+                    bullets: [],
+                    lastUpdate: Date.now()
+                };
+            }
+            
+            roomData[roomCode].players[player.id] = playerData.player;
+            roomData[roomCode].lastUpdate = Date.now();
+            
+            localStorage.setItem('zombieGame', JSON.stringify(roomData));
+        }
+        
+        // Get game state from server
+        function getGameState() {
+            // In a real implementation, you would receive this from a WebSocket
+            // For now, we'll simulate by reading from localStorage
+            const roomData = JSON.parse(localStorage.getItem('zombieGame') || '{}');
+            
+            if (roomData[roomCode]) {
+                processServerMessage(roomData[roomCode]);
             }
         }
         
-        function getGameState() {
-            fetch(serverUrl + '/api/gameState')
-                .then(response => response.json())
-                .then(data => processServerMessage(data))
-                .catch(error => console.error('Error getting game state:', error));
-        }
-        
+        // Process messages from server
         function processServerMessage(message) {
             if (message.players) {
                 updatePlayers(message.players);
             }
             
-            if (message.zombies) {
+            if (!isHost && message.zombies) {
                 updateZombies(message.zombies);
             }
             
             if (message.bullets) {
                 updateBullets(message.bullets);
             }
-            
-            if (message.chat) {
-                addChatMessage(message.chat);
-            }
         }
         
+        // Update other players
         function updatePlayers(players) {
             document.getElementById('player-count').textContent = Object.keys(players).length;
             
@@ -279,83 +996,260 @@
             }
         }
         
+        // Update zombies from host
         function updateZombies(serverZombies) {
-            // Only update zombies if server is managing them
-            if (serverZombies.length > 0) {
+            if (!isHost && serverZombies.length > 0) {
                 zombies = serverZombies;
             }
         }
         
+        // Update bullets from other players
         function updateBullets(serverBullets) {
-            // Add new bullets from server
-            serverBullets.forEach(bullet => {
-                if (bullet.playerId !== player.id) {
-                    const exists = bullets.some(b => b.id === bullet.id);
-                    if (!exists) {
-                        bullets.push(bullet);
+            if (Array.isArray(serverBullets)) {
+                serverBullets.forEach(bullet => {
+                    if (bullet.playerId !== player.id) {
+                        const exists = bullets.some(b => b.id === bullet.id);
+                        if (!exists) {
+                            bullets.push(bullet);
+                        }
                     }
+                });
+            }
+        }
+        
+        // Send chat message
+        function sendChatMessage(message) {
+            const chatData = {
+                playerId: player.id,
+                playerName: player.name,
+                text: message,
+                timestamp: Date.now()
+            };
+            
+            // In a real implementation, you would send this via WebSocket
+            // For now, we'll add it directly
+            addChatMessage(chatData);
+            
+            // Store the chat message in localStorage for other players to see
+            const roomData = JSON.parse(localStorage.getItem('zombieGame') || '{}');
+            
+            if (!roomData[roomCode]) {
+                roomData[roomCode] = {
+                    players: {},
+                    zombies: [],
+                    bullets: [],
+                    chat: []
+                };
+            }
+            
+            if (!roomData[roomCode].chat) {
+                roomData[roomCode].chat = [];
+            }
+            
+            roomData[roomCode].chat.push(chatData);
+            
+            // Keep only the last 20 messages
+            if (roomData[roomCode].chat.length > 20) {
+                roomData[roomCode].chat = roomData[roomCode].chat.slice(-20);
+            }
+            
+            localStorage.setItem('zombieGame', JSON.stringify(roomData));
+        }
+        
+        // Add chat message to chat box
+        function addChatMessage(message) {
+            const chatBox = document.getElementById('chat-box');
+            let displayName;
+            let textColor;
+            
+            if (message.playerId === 'system') {
+                displayName = 'SYSTEM';
+                textColor = '#ff9900';
+            } else if (message.playerId === player.id) {
+                displayName = message.playerName || 'You';
+                textColor = player.color;
+            } else {
+                displayName = message.playerName || `Player ${message.playerId.substring(0, 5)}`;
+                textColor = otherPlayers[message.playerId]?.color || '#ffffff';
+            }
+            
+            const messageElement = document.createElement('div');
+            messageElement.className = 'chat-message';
+            messageElement.innerHTML = `<span class="chat-name" style="color: ${textColor}">${displayName}</span>: ${message.text}`;
+            chatBox.appendChild(messageElement);
+            
+            // Auto-scroll to bottom
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+        
+        // Set up game event listeners
+        function setupEventListeners() {
+            // Resize handler
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+            
+            // Keyboard input
+            window.addEventListener('keydown', (e) => {
+                keys[e.key.toLowerCase()] = true;
+                
+                // Chat handling
+                if (e.key === 'Enter') {
+                    const chatInput = document.getElementById('chat-input');
+                    if (document.activeElement === chatInput && chatInput.value.trim() !== '') {
+                        sendChatMessage(chatInput.value);
+                        chatInput.value = '';
+                    } else if (document.activeElement !== chatInput) {
+                        chatInput.focus();
+                    }
+                }
+            });
+            
+            window.addEventListener('keyup', (e) => {
+                keys[e.key.toLowerCase()] = false;
+            });
+            
+            // Mouse movement for aiming
+            window.addEventListener('mousemove', (e) => {
+                if (!player.isAlive) return;
+                
+                const dx = e.clientX - player.x;
+                const dy = e.clientY - player.y;
+                player.angle = Math.atan2(dy, dx);
+            });
+            
+            // Mouse click for shooting
+            window.addEventListener('click', (e) => {
+                if (!player.isAlive) return;
+                
+                if (player.health > 0 && player.ammo > 0 && Date.now() - player.lastShot > 300) {
+                    shootBullet();
+                    player.lastShot = Date.now();
+                    player.ammo--;
+                    updateUI();
+                }
+            });
+            
+            // Mobile controls
+            if (isMobile) {
+                setupMobileControls();
+            }
+            
+            // Restart button
+            document.getElementById('restart-button').addEventListener('click', () => {
+                // Reset player
+                player.health = 100;
+                player.ammo = 30;
+                player.score = 0;
+                player.isAlive = true;
+                player.x = canvas.width / 2;
+                player.y = canvas.height / 2;
+                
+                // Hide game over screen
+                document.getElementById('game-over').style.display = 'none';
+                
+                // Reset blood overlay
+                bloodOverlay.style.opacity = 0;
+                
+                // Update UI
+                updateUI();
+            });
+        }
+        
+        // Setup mobile controls
+        function setupMobileControls() {
+            const joystick = document.getElementById('joystick');
+            const joystickContainer = document.querySelector('.joystick-container');
+            const shootButton = document.getElementById('shoot-button');
+            
+            let joystickActive = false;
+            let joystickOrigin = { x: 0, y: 0 };
+            let joystickPosition = { x: 0, y: 0 };
+            
+            // Joystick touch events
+            joystickContainer.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = joystickContainer.getBoundingClientRect();
+                
+                joystickActive = true;
+                joystickOrigin.x = rect.left + rect.width / 2;
+                joystickOrigin.y = rect.top + rect.height / 2;
+                joystickPosition.x = touch.clientX;
+                joystickPosition.y = touch.clientY;
+                
+                updateJoystickPosition();
+            });
+            
+            joystickContainer.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!joystickActive) return;
+                
+                const touch = e.touches[0];
+                joystickPosition.x = touch.clientX;
+                joystickPosition.y = touch.clientY;
+                
+                updateJoystickPosition();
+            });
+            
+            joystickContainer.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                joystickActive = false;
+                
+                // Reset joystick position
+                joystick.style.transform = 'translate(-50%, -50%)';
+                
+                // Reset movement keys
+                keys.w = false;
+                keys.a = false;
+                keys.s = false;
+                keys.d = false;
+            });
+            
+            function updateJoystickPosition() {
+                // Calculate joystick movement
+                let dx = joystickPosition.x - joystickOrigin.x;
+                let dy = joystickPosition.y - joystickOrigin.y;
+                
+                // Limit joystick range
+                const maxDistance = 40;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > maxDistance) {
+                    dx = dx * maxDistance / distance;
+                    dy = dy * maxDistance / distance;
+                }
+                
+                // Move joystick
+                joystick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                
+                // Set movement keys based on joystick position
+                keys.w = dy < -10;
+                keys.s = dy > 10;
+                keys.a = dx < -10;
+                keys.d = dx > 10;
+                
+                // Set player angle based on joystick direction
+                if (distance > 10) {
+                    player.angle = Math.atan2(dy, dx);
+                }
+            }
+            
+            // Shoot button
+            shootButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                
+                if (player.health > 0 && player.ammo > 0 && Date.now() - player.lastShot > 300) {
+                    shootBullet();
+                    player.lastShot = Date.now();
+                    player.ammo--;
+                    updateUI();
                 }
             });
         }
         
-        // Attempt to connect
-        connectToServer();
-        
-        // Input Handling
-        const keys = {};
-        
-        window.addEventListener('keydown', (e) => {
-            keys[e.key] = true;
-            
-            // Chat handling
-            if (e.key === 'Enter') {
-                const chatInput = document.getElementById('chat-input');
-                if (document.activeElement === chatInput && chatInput.value.trim() !== '') {
-                    sendChatMessage(chatInput.value);
-                    chatInput.value = '';
-                } else if (document.activeElement !== chatInput) {
-                    chatInput.focus();
-                }
-            }
-        });
-        
-        window.addEventListener('keyup', (e) => {
-            keys[e.key] = false;
-        });
-        
-        window.addEventListener('mousemove', (e) => {
-            const dx = e.clientX - player.x;
-            const dy = e.clientY - player.y;
-            player.angle = Math.atan2(dy, dx);
-        });
-        
-        window.addEventListener('click', (e) => {
-            if (player.ammo > 0 && Date.now() - player.lastShot > 300) { // Rate limiting
-                shootBullet();
-                player.lastShot = Date.now();
-                player.ammo--;
-                updateUI();
-                
-                // Send bullet to server for other players
-                const bulletData = {
-                    action: 'shoot',
-                    bullet: bullets[bullets.length - 1]
-                };
-                
-                if (socket && socket.readyState === WebSocket.OPEN) {
-                    socket.send(JSON.stringify(bulletData));
-                } else {
-                    fetch(serverUrl + '/api/shoot', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(bulletData)
-                    }).catch(error => console.error('Error sending bullet data:', error));
-                }
-            }
-        });
-        
+        // Shoot a bullet
         function shootBullet() {
             const bullet = {
                 id: player.id + '-' + Date.now(),
@@ -366,53 +1260,32 @@
                 radius: 5,
                 playerId: player.id
             };
+            
             bullets.push(bullet);
-        }
-        
-        function sendChatMessage(message) {
-            const chatData = {
-                action: 'chat',
-                message: {
-                    playerId: player.id,
-                    text: message,
-                    timestamp: Date.now()
+            
+            // Add bullet to server data
+            const roomData = JSON.parse(localStorage.getItem('zombieGame') || '{}');
+            
+            if (roomData[roomCode]) {
+                if (!roomData[roomCode].bullets) {
+                    roomData[roomCode].bullets = [];
                 }
-            };
-            
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify(chatData));
-            } else {
-                fetch(serverUrl + '/api/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(chatData)
-                }).catch(error => console.error('Error sending chat message:', error));
+                
+                roomData[roomCode].bullets.push(bullet);
+                
+                // Keep only the last 50 bullets
+                if (roomData[roomCode].bullets.length > 50) {
+                    roomData[roomCode].bullets = roomData[roomCode].bullets.slice(-50);
+                }
+                
+                localStorage.setItem('zombieGame', JSON.stringify(roomData));
             }
-            
-            // Add message locally
-            addChatMessage({
-                playerId: player.id,
-                text: message,
-                timestamp: Date.now()
-            });
         }
         
-        function addChatMessage(message) {
-            const chatBox = document.getElementById('chat-box');
-            const playerColor = message.playerId === player.id ? player.color : (otherPlayers[message.playerId]?.color || '#ffffff');
-            
-            const messageElement = document.createElement('div');
-            messageElement.innerHTML = `<span style="color: ${playerColor}">Player ${message.playerId.substring(0, 5)}</span>: ${message.text}`;
-            chatBox.appendChild(messageElement);
-            
-            // Auto-scroll to bottom
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-        
-        // Game Logic
+        // Spawn a zombie (host only)
         function spawnZombie() {
+            if (!isHost || !gameStarted) return;
+            
             // Spawn zombies from outside the screen
             let x, y;
             const side = Math.floor(Math.random() * 4);
@@ -436,55 +1309,64 @@
                     break;
             }
             
-            zombies.push({
+            const zombie = {
+                id: 'z-' + Date.now() + '-' + Math.random().toString(36).substring(2, 8),
                 x: x,
                 y: y,
                 radius: 20,
                 health: 100,
                 speed: ZOMBIE_SPEED * (0.8 + Math.random() * 0.4), // Some variation
                 color: '#8BC34A' // Zombie green
-            });
+            };
+            
+            zombies.push(zombie);
+            
+            // Update zombies in server data
+            const roomData = JSON.parse(localStorage.getItem('zombieGame') || '{}');
+            
+            if (roomData[roomCode]) {
+                roomData[roomCode].zombies = zombies;
+                localStorage.setItem('zombieGame', JSON.stringify(roomData));
+            }
         }
         
-        // Spawn a zombie every 2 seconds
-        setInterval(spawnZombie, 2000);
-        
-        // Ammo regeneration
-        setInterval(() => {
-            if (player.ammo < 30) {
-                player.ammo++;
-                updateUI();
-            }
-        }, 3000);
-        
+        // Update UI elements
         function updateUI() {
             document.getElementById('health').textContent = player.health;
             document.getElementById('ammo').textContent = player.ammo;
             document.getElementById('score').textContent = player.score;
+            
+            // Update health bar
+            healthFill.style.width = (player.health / 100 * 100) + '%';
+            
+            // Color health bar based on health
+            if (player.health > 70) {
+                healthFill.style.backgroundColor = '#ff3e3e';
+            } else if (player.health > 30) {
+                healthFill.style.backgroundColor = '#ff9f3e';
+            } else {
+                healthFill.style.backgroundColor = '#ff3e3e';
+                healthFill.style.animation = 'pulse 1s infinite';
+            }
         }
         
+        // Show damage effect
+        function showDamageEffect() {
+            bloodOverlay.style.opacity = '0.3';
+            setTimeout(() => {
+                bloodOverlay.style.opacity = '0';
+            }, 500);
+        }
+        
+        // Game over
         function gameOver() {
             document.getElementById('final-score').textContent = player.score;
             document.getElementById('game-over').style.display = 'block';
+            player.isAlive = false;
+            
+            // Show blood overlay
+            bloodOverlay.style.opacity = '0.5';
         }
-        
-        document.getElementById('restart-button').addEventListener('click', () => {
-            // Reset player
-            player.health = 100;
-            player.ammo = 30;
-            player.score = 0;
-            player.x = canvas.width / 2;
-            player.y = canvas.height / 2;
-            
-            // Clear zombies
-            zombies = [];
-            
-            // Hide game over screen
-            document.getElementById('game-over').style.display = 'none';
-            
-            // Update UI
-            updateUI();
-        });
         
         // Game Loop
         function update() {
@@ -495,34 +1377,68 @@
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Only move player if alive
+            // Update player movement
             if (player.health > 0) {
-                // Player movement
-                let dx = 0;
-                let dy = 0;
-                
-                if (keys['w'] || keys['ArrowUp']) dy -= PLAYER_SPEED;
-                if (keys['s'] || keys['ArrowDown']) dy += PLAYER_SPEED;
-                if (keys['a'] || keys['ArrowLeft']) dx -= PLAYER_SPEED;
-                if (keys['d'] || keys['ArrowRight']) dx += PLAYER_SPEED;
-                
-                // Normalize diagonal movement
-                if (dx !== 0 && dy !== 0) {
-                    const length = Math.sqrt(dx * dx + dy * dy);
-                    dx = dx / length * PLAYER_SPEED;
-                    dy = dy / length * PLAYER_SPEED;
-                }
-                
-                // Update player position
-                player.x += dx;
-                player.y += dy;
-                
-                // Keep player in bounds
-                player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
-                player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
+                updatePlayerMovement();
             }
             
             // Update bullets
+            updateBullets();
+            
+            // Update zombies
+            updateZombies();
+            
+            // Draw game elements
+            drawGame();
+            
+            // Send periodic updates to server
+            if (now - lastPlayerUpdate > SERVER_UPDATE_RATE) {
+                sendPlayerData();
+                
+                // If host, also update zombies
+                if (isHost) {
+                    const roomData = JSON.parse(localStorage.getItem('zombieGame') || '{}');
+                    if (roomData[roomCode]) {
+                        roomData[roomCode].zombies = zombies;
+                        localStorage.setItem('zombieGame', JSON.stringify(roomData));
+                    }
+                }
+                
+                lastPlayerUpdate = now;
+            }
+            
+            // Continue game loop
+            requestAnimationFrame(update);
+        }
+        
+        // Update player movement
+        function updatePlayerMovement() {
+            let dx = 0;
+            let dy = 0;
+            
+            if (keys['w'] || keys['arrowup']) dy -= PLAYER_SPEED;
+            if (keys['s'] || keys['arrowdown']) dy += PLAYER_SPEED;
+            if (keys['a'] || keys['arrowleft']) dx -= PLAYER_SPEED;
+            if (keys['d'] || keys['arrowright']) dx += PLAYER_SPEED;
+            
+            // Normalize diagonal movement
+            if (dx !== 0 && dy !== 0) {
+                const length = Math.sqrt(dx * dx + dy * dy);
+                dx = dx / length * PLAYER_SPEED;
+                dy = dy / length * PLAYER_SPEED;
+            }
+            
+            // Update player position
+            player.x += dx;
+            player.y += dy;
+            
+            // Keep player in bounds
+            player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
+            player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
+        }
+        
+        // Update bullets
+        function updateBullets() {
             for (let i = bullets.length - 1; i >= 0; i--) {
                 const bullet = bullets[i];
                 bullet.x += Math.cos(bullet.angle) * bullet.speed;
@@ -550,6 +1466,8 @@
                         // Check if zombie is dead
                         if (zombie.health <= 0) {
                             zombies.splice(j, 1);
+                            
+                            // Award points to shooter
                             if (bullet.playerId === player.id) {
                                 player.score += 10;
                                 updateUI();
@@ -560,8 +1478,10 @@
                     }
                 }
             }
-            
-            // Update zombies
+        }
+        
+        // Update zombies
+        function updateZombies() {
             for (let i = 0; i < zombies.length; i++) {
                 const zombie = zombies[i];
                 
@@ -570,12 +1490,14 @@
                 let targetY = player.y;
                 
                 // If player is dead, find nearest living player
-                if (player.health <= 0) {
+                if (!player.isAlive) {
                     let nearestPlayer = null;
                     let minDistance = Infinity;
                     
                     for (const id in otherPlayers) {
                         const p = otherPlayers[id];
+                        if (!p.isAlive) continue; // Skip dead players
+                        
                         const dx = zombie.x - p.x;
                         const dy = zombie.y - p.y;
                         const distance = Math.sqrt(dx * dx + dy * dy);
@@ -589,6 +1511,20 @@
                     if (nearestPlayer) {
                         targetX = nearestPlayer.x;
                         targetY = nearestPlayer.y;
+                    } else {
+                        // If no living players, zombies wander randomly
+                        if (!zombie.wanderAngle) {
+                            zombie.wanderAngle = Math.random() * Math.PI * 2;
+                            zombie.wanderTime = now + 2000; // Change direction every 2 seconds
+                        }
+                        
+                        if (now > zombie.wanderTime) {
+                            zombie.wanderAngle = Math.random() * Math.PI * 2;
+                            zombie.wanderTime = now + 2000;
+                        }
+                        
+                        targetX = zombie.x + Math.cos(zombie.wanderAngle) * 100;
+                        targetY = zombie.y + Math.sin(zombie.wanderAngle) * 100;
                     }
                 }
                 
@@ -602,7 +1538,7 @@
                 }
                 
                 // Check zombie collisions with player
-                if (player.health > 0) {
+                if (player.isAlive) {
                     const pDx = player.x - zombie.x;
                     const pDy = player.y - zombie.y;
                     const pDistance = Math.sqrt(pDx * pDx + pDy * pDy);
@@ -611,36 +1547,145 @@
                         player.health -= 1; // Zombie damage per frame
                         updateUI();
                         
+                        // Show damage effect occasionally
+                        if (player.health % 10 === 0) {
+                            showDamageEffect();
+                        }
+                        
                         if (player.health <= 0) {
                             gameOver();
                         }
                     }
                 }
             }
+        }
+        
+        // Draw game elements
+        function drawGame() {
+            // Draw grid background
+            drawGrid();
             
-            // Drawing
+            // Draw bullets
+            bullets.forEach(bullet => {
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffcc00';
+                ctx.fill();
+                
+                // Bullet trail
+                ctx.beginPath();
+                ctx.moveTo(bullet.x, bullet.y);
+                ctx.lineTo(
+                    bullet.x - Math.cos(bullet.angle) * 10,
+                    bullet.y - Math.sin(bullet.angle) * 10
+                );
+                ctx.strokeStyle = 'rgba(255, 204, 0, 0.5)';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            });
             
             // Draw other players
             for (const id in otherPlayers) {
                 const p = otherPlayers[id];
                 
-                // Player body
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 20, 0, Math.PI * 2);
-                ctx.fillStyle = p.color || '#cccccc';
-                ctx.fill();
+                // Skip if player has no position data
+                if (typeof p.x !== 'number' || typeof p.y !== 'number') continue;
                 
-                // Player direction
-                ctx.beginPath();
-                ctx.moveTo(p.x, p.y);
-                ctx.lineTo(p.x + Math.cos(p.angle) * 30, p.y + Math.sin(p.angle) * 30);
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 3;
-                ctx.stroke();
+                // Check if player is alive
+                const isAlive = p.isAlive !== false;
+                
+                if (isAlive) {
+                    // Player body
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 20, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color || '#cccccc';
+                    ctx.fill();
+                    
+                    // Player direction
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(p.x + Math.cos(p.angle) * 30, p.y + Math.sin(p.angle) * 30);
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                } else {
+                    // Dead player (X mark)
+                    ctx.beginPath();
+                    ctx.moveTo(p.x - 15, p.y - 15);
+                    ctx.lineTo(p.x + 15, p.y + 15);
+                    ctx.moveTo(p.x + 15, p.y - 15);
+                    ctx.lineTo(p.x - 15, p.y + 15);
+                    ctx.strokeStyle = p.color || '#cccccc';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                }
+                
+                // Player name
+                ctx.font = '12px Arial';
+                ctx.fillStyle = '#ffffff';
+                ctx.textAlign = 'center';
+                ctx.fillText(p.name || `Player ${id.substring(0, 5)}`, p.x, p.y - 30);
             }
             
+            // Draw zombies
+            zombies.forEach(zombie => {
+                // Zombie body
+                ctx.beginPath();
+                ctx.arc(zombie.x, zombie.y, zombie.radius, 0, Math.PI * 2);
+                
+                // Color transition based on health
+                const healthPercent = zombie.health / 100;
+                const r = Math.floor(139 * healthPercent);
+                const g = Math.floor(195 * healthPercent);
+                const b = Math.floor(74 * healthPercent);
+                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                ctx.fill();
+                
+                // Zombie eyes
+                const eyeOffset = 7;
+                const eyeRadius = 4;
+                
+                // Calculate direction to target
+                let targetX = player.isAlive ? player.x : canvas.width / 2;
+                let targetY = player.isAlive ? player.y : canvas.height / 2;
+                
+                // Find nearest living player if current player is dead
+                if (!player.isAlive) {
+                    for (const id in otherPlayers) {
+                        const p = otherPlayers[id];
+                        if (p.isAlive) {
+                            targetX = p.x;
+                            targetY = p.y;
+                            break;
+                        }
+                    }
+                }
+                
+                const zombieAngle = Math.atan2(targetY - zombie.y, targetX - zombie.x);
+                
+                // Left eye
+                ctx.beginPath();
+                ctx.arc(
+                    zombie.x + Math.cos(zombieAngle + 0.3) * eyeOffset,
+                    zombie.y + Math.sin(zombieAngle + 0.3) * eyeOffset,
+                    eyeRadius, 0, Math.PI * 2
+                );
+                ctx.fillStyle = '#ff0000';
+                ctx.fill();
+                
+                // Right eye
+                ctx.beginPath();
+                ctx.arc(
+                    zombie.x + Math.cos(zombieAngle - 0.3) * eyeOffset,
+                    zombie.y + Math.sin(zombieAngle - 0.3) * eyeOffset,
+                    eyeRadius, 0, Math.PI * 2
+                );
+                ctx.fillStyle = '#ff0000';
+                ctx.fill();
+            });
+            
             // Draw player
-            if (player.health > 0) {
+            if (player.isAlive) {
                 // Player body
                 ctx.beginPath();
                 ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
@@ -654,37 +1699,49 @@
                 ctx.strokeStyle = '#ffffff';
                 ctx.lineWidth = 3;
                 ctx.stroke();
+            } else {
+                // Dead player (X mark)
+                ctx.beginPath();
+                ctx.moveTo(player.x - 15, player.y - 15);
+                ctx.lineTo(player.x + 15, player.y + 15);
+                ctx.moveTo(player.x + 15, player.y - 15);
+                ctx.lineTo(player.x - 15, player.y + 15);
+                ctx.strokeStyle = player.color;
+                ctx.lineWidth = 3;
+                ctx.stroke();
             }
             
-            // Draw zombies
-            zombies.forEach(zombie => {
-                ctx.beginPath();
-                ctx.arc(zombie.x, zombie.y, zombie.radius, 0, Math.PI * 2);
-                
-                // Color transition based on health
-                const healthPercent = zombie.health / 100;
-                const r = Math.floor(139 * healthPercent);
-                const g = Math.floor(195 * healthPercent);
-                const b = Math.floor(74 * healthPercent);
-                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-                
-                ctx.fill();
-            });
-            
-            // Draw bullets
-            bullets.forEach(bullet => {
-                ctx.beginPath();
-                ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
-                ctx.fillStyle = '#ffcc00';
-                ctx.fill();
-            });
-            
-            // Continue game loop
-            requestAnimationFrame(update);
+            // Player name
+            ctx.font = '12px Arial';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.fillText(player.name, player.x, player.y - 30);
         }
         
-        // Start game
-        update();
+        // Draw grid background
+        function drawGrid() {
+            const gridSize = 50;
+            const gridColor = 'rgba(50, 50, 50, 0.5)';
+            
+            ctx.strokeStyle = gridColor;
+            ctx.lineWidth = 1;
+            
+            // Vertical lines
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            // Horizontal lines
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
     </script>
 </body>
 </html>
