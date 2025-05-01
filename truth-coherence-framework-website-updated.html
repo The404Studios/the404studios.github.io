@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Truth-Coherence Framework</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <style>
+        .formula {
+            padding: 1rem;
+            margin: 1rem 0;
+            background-color: #f8f9fa;
+            border-left: 4px solid #4299e1;
+            font-family: 'Times New Roman', serif;
+        }
+        .slider-container {
+            margin: 20px 0;
+        }
+        .slider-container label {
+            display: inline-block;
+            width: 120px;
+        }
+        .slider {
+            width: 250px;
+        }
+        .value-display {
+            display: inline-block;
+            width: 50px;
+            text-align: center;
+        }
+        .math {
+            font-style: italic;
+        }
+        .equation {
+            text-align: center;
+            font-style: italic;
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2em;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- Header with sticky navigation -->
+    <header class="bg-blue-900 text-white py-4 shadow-md sticky top-0 z-10">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl md:text-2xl font-bold">Truth-Coherence Framework</h1>
+                <nav class="hidden md:block">
+                    <ul class="flex space-x-6">
+                        <li><a href="#introduction" class="hover:text-blue-300">Introduction</a></li>
+                        <li><a href="#mathematical-model" class="hover:text-blue-300">Mathematical Model</a></li>
+                        <li><a href="#interactive" class="hover:text-blue-300">Interactive</a></li>
+                        <li><a href="#applications" class="hover:text-blue-300">Applications</a></li>
+                        <li><a href="#conclusions" class="hover:text-blue-300">Conclusions</a></li>
+                    </ul>
+                </nav>
+                <button class="md:hidden" id="mobile-menu-button">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile navigation menu -->
+    <div class="md:hidden bg-blue-800 text-white hidden" id="mobile-menu">
+        <ul class="px-4 py-2">
+            <li class="py-2"><a href="#introduction">Introduction</a></li>
+            <li class="py-2"><a href="#mathematical-model">Mathematical Model</a></li>
+            <li class="py-2"><a href="#interactive">Interactive</a></li>
+            <li class="py-2"><a href="#applications">Applications</a></li>
+            <li class="py-2"><a href="#conclusions">Conclusions</a></li>
+        </ul>
+    </div>
+
+    <!-- Hero section -->
+    <section class="bg-gradient-to-r from-blue-700 to-blue-500 text-white py-16">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <h1 class="text-4xl md:text-5xl font-bold mb-6">Truth, Deception, and Entropy in Coherence Systems</h1>
+            <h2 class="text-2xl md:text-3xl mb-8">A Comprehensive Framework for Judgment, Correction, Intergenerational Justice, and Fringe Rescue Dynamics</h2>
+            <p class="text-xl mb-8">By Elijah Isaiah Roberts, Independent Researcher</p>
+            <div class="bg-white text-gray-800 p-6 rounded-lg shadow-lg">
+                <p class="italic text-lg">
+                    "This paper introduces a formal mathematical model of judgment, correction, and systemic justice through a comprehensive framework of truth and coherence."
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Introduction section -->
+    <section id="introduction" class="py-12 bg-white">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <h2 class="text-3xl font-bold mb-6 text-blue-800">Introduction</h2>
+            <p class="mb-4">
+                This framework presents a formal mathematical theory of judgment, correction, and systemic justice. While previous approaches have addressed entropy in physical or informational systems, our framework uniquely models how judgment processes (determination of truth) and corrective mechanisms (responses to deception) affect systemic integrity and justice.
+            </p>
+            <p class="mb-4">
+                We model a system where coherence represents not merely physical order but the ethical-epistemic alignment of a just system capable of self-correction.
+            </p>
+            <div class="bg-blue-50 p-6 rounded-lg shadow-md my-6">
+                <h3 class="text-xl font-bold mb-4 text-blue-700">Key Concepts</h3>
+                <ul class="list-disc list-inside space-y-2">
+                    <li><strong>Truth Factor (T):</strong> Represents the veracity of information in the system</li>
+                    <li><strong>Observation (O):</strong> The transparency and visibility of system processes</li>
+                    <li><strong>Attention (A):</strong> The system's bandwidth or focus on coherence signals</li>
+                    <li><strong>Attunement (U):</strong> Alignment with external reality</li>
+                    <li><strong>Resonance (R):</strong> Internal consistency of system components</li>
+                    <li><strong>Accountability (α):</strong> The rate at which the system responds to truth and deception</li>
+                    <li><strong>Patience (P):</strong> The threshold of disorder a system can tolerate</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mathematical Model section -->
+    <section id="mathematical-model" class="py-12 bg-gray-100">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <h2 class="text-3xl font-bold mb-6 text-blue-800">Mathematical Model</h2>
+            <p class="mb-6">
+                Our core premise holds that coherence evolution follows the expanded equation:
+            </p>
+            <div class="formula text-center text-xl p-4">
+                <div class="equation">C<sub>t+1</sub> = C<sub>t</sub> × (T × O × A × U)<sup>α</sup></div>
+            </div>
+            <p class="mb-6">
+                Where:
+            </p>
+            <ul class="list-disc list-inside space-y-2 mb-6">
+                <li>T ∈ [0, 1] represents the Truth Factor</li>
+                <li>D = 1 - T represents the Deception Factor</li>
+                <li>O ∈ [0, 1] represents Observational Integrity</li>
+                <li>C<sub>t</sub> ∈ [0, 1] represents Coherence at time t</li>
+                <li>E<sub>t</sub> = 1 - C<sub>t</sub> represents Entropy</li>
+                <li>α > 0 represents Accountability</li>
+                <li>P ∈ [0, ∞) represents Patience threshold</li>
+                <li>A ∈ [0, 1] represents Attention</li>
+                <li>U ∈ [0, 1] represents Attunement</li>
+            </ul>
+            <p class="mb-4">
+                Additionally, we define a critical Correction Trigger Condition:
+            </p>
+            <div class="formula text-center text-xl p-4">
+                <div class="equation">If E<sub>t</sub> ≥ P → external correction required</div>
+            </div>
+            <p class="mb-4">
+                This condition formalizes when a system can no longer self-correct and requires intervention.
+            </p>
+        </div>
+    </section>
+
+    <!-- Interactive section -->
+    <section id="interactive" class="py-12 bg-white">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <h2 class="text-3xl font-bold mb-6 text-blue-800">Interactive Model Exploration</h2>
+            <p class="mb-6">
+                Adjust the sliders below to see how different parameters affect system coherence over time.
+            </p>
+
+            <!-- Sliders for parameters -->
+            <div class="mb-8 bg-blue-50 p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-bold mb-4 text-blue-700">System Parameters</h3>
+                
+                <div class="slider-container">
+                    <label for="initial-coherence">Initial Coherence:</label>
+                    <input type="range" id="initial-coherence" class="slider" min="0" max="1" step="0.01" value="1">
+                    <span id="initial-coherence-value" class="value-display">1.00</span>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="truth">Truth Factor (T):</label>
+                    <input type="range" id="truth" class="slider" min="0" max="1" step="0.01" value="0.95">
+                    <span id="truth-value" class="value-display">0.95</span>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="observation">Observation (O):</label>
+                    <input type="range" id="observation" class="slider" min="0" max="1" step="0.01" value="0.9">
+                    <span id="observation-value" class="value-display">0.90</span>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="attention">Attention (A):</label>
+                    <input type="range" id="attention" class="slider" min="0" max="1" step="0.01" value="0.9">
+                    <span id="attention-value" class="value-display">0.90</span>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="attunement">Attunement (U):</label>
+                    <input type="range" id="attunement" class="slider" min="0" max="1" step="0.01" value="0.9">
+                    <span id="attunement-value" class="value-display">0.90</span>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="alpha">Accountability (α):</label>
+                    <input type="range" id="alpha" class="slider" min="0.1" max="5" step="0.1" value="1">
+                    <span id="alpha-value" class="value-display">1.00</span>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="patience">Patience (P):</label>
+                    <input type="range" id="patience" class="slider" min="0" max="1" step="0.01" value="0.3">
+                    <span id="patience-value" class="value-display">0.30</span>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="iterations">Time Steps:</label>
+                    <input type="range" id="iterations" class="slider" min="1" max="50" step="1" value="10">
+                    <span id="iterations-value" class="value-display">10</span>
+                </div>
+                
+                <button id="calculate-btn" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">
+                    Calculate System Evolution
+                </button>
+            </div>
+
+            <!-- Results display -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-4 rounded-lg shadow-md">
+                    <h4 class="text-lg font-bold mb-4 text-blue-700">Coherence Over Time</h4>
+                    <canvas id="coherence-chart" height="300"></canvas>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-md">
+                    <h4 class="text-lg font-bold mb-4 text-blue-700">Entropy Over Time</h4>
+                    <canvas id="entropy-chart" height="300"></canvas>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-white p-6 rounded-lg shadow-md">
+                <h4 class="text-lg font-bold mb-4 text-blue-700">System Analysis</h4>
+                <div id="system-analysis" class="p-4 border border-gray-200 rounded bg-gray-50 min-h-32">
+                    Adjust the parameters and click "Calculate System Evolution" to see the analysis.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Applications section -->
+    <section id="applications" class="py-12 bg-gray-100">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <h2 class="text-3xl font-bold mb-6 text-blue-800">Applications</h2>
+            
+            <div class="mb-8">
+                <h3 class="text-2xl font-bold mb-4 text-blue-700">Human Relationships</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h4 class="text-lg font-bold mb-2 text-blue-600">Healthy Relationship</h4>
+                        <p class="mb-2">Parameters:</p>
+                        <ul class="list-disc list-inside mb-4">
+                            <li>Truth: 0.95</li>
+                            <li>Observation: 0.9</li>
+                            <li>Attention: 0.9</li>
+                            <li>Attunement: 0.95</li>
+                            <li>Accountability: 1.0</li>
+                        </ul>
+                        <p class="font-semibold">Result: 73.1% coherence retention</p>
+                        <p class="text-sm text-gray-600 mt-2">Can self-correct as E₁ = 0.269 < P = 0.3</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h4 class="text-lg font-bold mb-2 text-blue-600">Toxic Relationship</h4>
+                        <p class="mb-2">Parameters:</p>
+                        <ul class="list-disc list-inside mb-4">
+                            <li>Truth: 0.6</li>
+                            <li>Observation: 0.4</li>
+                            <li>Attention: 0.5</li>
+                            <li>Attunement: 0.7</li>
+                            <li>Accountability: 1.0</li>
+                        </ul>
+                        <p class="font-semibold">Result: 8.4% coherence retention</p>
+                        <p class="text-sm text-gray-600 mt-2">Requires intervention as E₁ = 0.916 > P = 0.3</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-8">
+                <h3 class="text-2xl font-bold mb-4 text-blue-700">Institutional Justice</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white rounded-lg overflow-hidden shadow-md">
+                        <thead class="bg-blue-700 text-white">
+                            <tr>
+                                <th class="py-2 px-4 text-left">Institution Type</th>
+                                <th class="py-2 px-4 text-center">T</th>
+                                <th class="py-2 px-4 text-center">O</th>
+                                <th class="py-2 px-4 text-center">A</th>
+                                <th class="py-2 px-4 text-center">U</th>
+                                <th class="py-2 px-4 text-center">R</th>
+                                <th class="py-2 px-4 text-center">C₁</th>
+                                <th class="py-2 px-4 text-center">E₁</th>
+                                <th class="py-2 px-4 text-left">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="py-2 px-4">High-functioning</td>
+                                <td class="py-2 px-4 text-center">0.95</td>
+                                <td class="py-2 px-4 text-center">0.9</td>
+                                <td class="py-2 px-4 text-center">0.8</td>
+                                <td class="py-2 px-4 text-center">0.9</td>
+                                <td class="py-2 px-4 text-center">0.95</td>
+                                <td class="py-2 px-4 text-center">0.446</td>
+                                <td class="py-2 px-4 text-center">0.554</td>
+                                <td class="py-2 px-4 text-yellow-600">Requires reform</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-2 px-4">Moderate corruption</td>
+                                <td class="py-2 px-4 text-center">0.7</td>
+                                <td class="py-2 px-4 text-center">0.6</td>
+                                <td class="py-2 px-4 text-center">0.7</td>
+                                <td class="py-2 px-4 text-center">0.8</td>
+                                <td class="py-2 px-4 text-center">0.7</td>
+                                <td class="py-2 px-4 text-center">0.067</td>
+                                <td class="py-2 px-4 text-center">0.933</td>
+                                <td class="py-2 px-4 text-red-600">System collapse</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2 px-4">Captured institution</td>
+                                <td class="py-2 px-4 text-center">0.3</td>
+                                <td class="py-2 px-4 text-center">0.4</td>
+                                <td class="py-2 px-4 text-center">0.5</td>
+                                <td class="py-2 px-4 text-center">0.6</td>
+                                <td class="py-2 px-4 text-center">0.4</td>
+                                <td class="py-2 px-4 text-center">0.002</td>
+                                <td class="py-2 px-4 text-center">0.998</td>
+                                <td class="py-2 px-4 text-red-700">Complete replacement</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div>
+                <h3 class="text-2xl font-bold mb-4 text-blue-700">AI Alignment</h3>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <p class="mb-4">
+                        For an AI system with moderately truthful data (T=0.8), limited monitoring (O=0.7), divided attention (A=0.6),
+                        imperfect value alignment (U=0.85), and internal inconsistencies (R=0.8), with high accountability (α=2.5):
+                    </p>
+                    <div class="p-4 bg-red-50 border border-red-200 rounded-lg mb-4">
+                        <p class="font-bold text-red-700">Result: 97.4% degradation in judgment capability</p>
+                        <p class="text-sm">Far exceeding patience threshold (P=0.2), requiring immediate external correction</p>
+                    </div>
+                    <p>
+                        This demonstrates why AI systems can fail rapidly when any component becomes compromised, 
+                        and why high accountability factors accelerate system deterioration.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dynamic Override Law section -->
+    <section class="py-12 bg-white">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <h2 class="text-3xl font-bold mb-6 text-blue-800">Fringe Rescue Dynamics</h2>
+            <p class="mb-6">
+                Our framework introduces two complementary mechanisms to model how marginalized or fringe elements
+                can preserve system coherence during stress or collapse.
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-blue-50 p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-4 text-blue-700">Dynamic Override Law</h3>
+                    <p class="mb-4">
+                        An event-driven override that activates only when coherence collapses past a threshold
+                        <strong>and</strong> a high-integrity fringe signal is detected:
+                    </p>
+                    <div class="formula text-center">
+                        <div class="equation">If E<sub>t</sub> ≥ P and F × Ψ × φ > Θ then C<sub>t+1</sub> ← C<sub>t+1</sub> + φ × F × Ψ</div>
+                    </div>
+                    <p class="mt-4">
+                        Creates an emergency coherence injection when systems have collapsed.
+                    </p>
+                </div>
+                
+                <div class="bg-blue-50 p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-4 text-blue-700">Fringe Support Coefficient</h3>
+                    <p class="mb-4">
+                        A passive stabilizer that naturally modulates how accountability and load stress affect the system:
+                    </p>
+                    <div class="formula text-center">
+                        <div class="equation">α' = α × (1 - F<sub>s</sub>)</div>
+                        <div class="equation">L' = L × (1 - F<sub>s</sub>)</div>
+                    </div>
+                    <p class="mt-4">
+                        Provides passive entropy resistance that continually dampens pressure.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <img src="/api/placeholder/800/400" alt="Fringe Rescue Dynamics Illustration" class="w-full h-auto rounded mb-4">
+                <p class="text-sm text-gray-600 italic text-center">
+                    Illustration: How fringe elements with high integrity can suddenly become crucial during systemic collapse
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Conclusions section -->
+    <section id="conclusions" class="py-12 bg-gray-100">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <h2 class="text-3xl font-bold mb-6 text-blue-800">Conclusions & Implications</h2>
+            
+            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                <h3 class="text-xl font-bold mb-4 text-blue-700">Key Findings</h3>
+                <ul class="list-disc list-inside space-y-2">
+                    <li>Truth, observation, attention, attunement, and resonance together preserve coherent, just systems</li>
+                    <li>System degradation follows an exponential pattern governed by accountability (α)</li>
+                    <li>The patience threshold (P) determines precisely when systems require external intervention</li>
+                    <li>Child Reference Pointers enable modeling how coherence propagates across generations</li>
+                    <li>Fringe elements with high integrity can rescue collapsing systems when receptivity increases</li>
+                    <li>The Neutral Timeline Hypothesis demonstrates that accountability functions as a cross-dimensional constant</li>
+                </ul>
+            </div>
+            
+            <div class="bg-blue-50 p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-bold mb-4 text-blue-700">Future Research Directions</h3>
+                <ul class="list-disc list-inside space-y-2">
+                    <li>Testing this framework against historical cases of institutional failure and recovery</li>
+                    <li>Modeling networked systems with different parameter values</li>
+                    <li>Exploring how varying the accountability factor (α) and patience threshold (P) might optimize system performance</li>
+                    <li>Developing empirical methods to measure resonance (R) in complex systems</li>
+                    <li>Analyzing how fringe receptivity (φ) changes during different types of systemic crisis</li>
+                    <li>Testing the Cross-Dimensional Accountability Theorem in multivariate simulations</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-blue-900 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <h3 class="text-xl font-bold mb-2">Truth-Coherence Framework</h3>
+                    <p>By Elijah Isaiah Roberts, Independent Researcher</p>
+                </div>
+                <div>
+                    <p>© 2025 All Rights Reserved</p>
+                    <p class="text-sm mt-2">ORCID: 0009-0003-0660-1798</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        mobileMenuButton.addEventListener('click', () => {
+            if (mobileMenu.classList.contains('hidden')) {
+                mobileMenu.classList.remove('hidden');
+            } else {
+                mobileMenu.classList.add('hidden');
+            }
+        });
+
+        // Handle slider value display updates
+        const sliders = [
+            'initial-coherence', 'truth', 'observation', 'attention', 'attunement', 
+            'alpha', 'patience', 'iterations'
+        ];
+        
+        sliders.forEach(sliderId => {
+            const slider = document.getElementById(sliderId);
+            const valueDisplay = document.getElementById(`${sliderId}-value`);
+            
+            slider.addEventListener('input', () => {
+                valueDisplay.textContent = parseFloat(slider.value).toFixed(2);
+            });
+        });
+
+        // Initialize charts
+        let coherenceChart, entropyChart;
+
+        function initCharts() {
+            const coherenceCtx = document.getElementById('coherence-chart').getContext('2d');
+            const entropyCtx = document.getElementById('entropy-chart').getContext('2d');
+            
+            coherenceChart = new Chart(coherenceCtx, {
+                type: 'line',
+                data: {
+                    labels: ['0'],
+                    datasets: [{
+                        label: 'Coherence',
+                        data: [1],
+                        borderColor: 'rgb(66, 153, 225)',
+                        backgroundColor: 'rgba(66, 153, 225, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            title: {
+                                display: true,
+                                text: 'Coherence (C)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time Step'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            entropyChart = new Chart(entropyCtx, {
+                type: 'line',
+                data: {
+                    labels: ['0'],
+                    datasets: [{
+                        label: 'Entropy',
+                        data: [0],
+                        borderColor: 'rgb(237, 100, 166)',
+                        backgroundColor: 'rgba(237, 100, 166, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: 'Patience Threshold',
+                        data: [0.3],
+                        borderColor: 'rgb(245, 158, 11)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: false,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            title: {
+                                display: true,
+                                text: 'Entropy (E)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time Step'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Calculate system evolution
+        function calculateEvolution() {
+            // Get parameter values
+            const initialCoherence = parseFloat(document.getElementById('initial-coherence').value);
+            const truth = parseFloat(document.getElementById('truth').value);
+            const observation = parseFloat(document.getElementById('observation').value);
+            const attention = parseFloat(document.getElementById('attention').value);
+            const attunement = parseFloat(document.getElementById('attunement').value);
+            const alpha = parseFloat(document.getElementById('alpha').value);
+            const patience = parseFloat(document.getElementById('patience').value);
+            const iterations = parseInt(document.getElementById('iterations').value);
+            
+            // Calculate system evolution
+            const coherenceValues = [initialCoherence];
+            const entropyValues = [1 - initialCoherence];
+            const timeLabels = Array.from({length: iterations + 1}, (_, i) => i.toString());
+            
+            // Calculate the combined factor
+            const factor = truth * observation * attention * attunement;
+            
+            // Calculate coherence and entropy over time
+            let currentCoherence = initialCoherence;
+            for (let i = 0; i < iterations; i++) {
+                currentCoherence = currentCoherence * Math.pow(factor, alpha);
+                coherenceValues.push(currentCoherence);
+                entropyValues.push(1 - currentCoherence);
+            }
+            
+            // Update charts
+            coherenceChart.data.labels = timeLabels;
+            coherenceChart.data.datasets[0].data = coherenceValues;
+            
+            entropyChart.data.labels = timeLabels;
+            entropyChart.data.datasets[0].data = entropyValues;
+            entropyChart.data.datasets[1].data = Array(iterations + 1).fill(patience);
+            
+            coherenceChart.update();
+            entropyChart.update();
+            
+            // Update system analysis
+            const analysisDiv = document.getElementById('system-analysis');
+            
+            // Determine intervention point
+            let interventionStep = -1;
+            for (let i = 0; i < entropyValues.length; i++) {
+                if (entropyValues[i] >= patience) {
+                    interventionStep = i;
+                    break;
+                }
+            }
+            
+            const finalCoherence = coherenceValues[iterations];
+            const finalEntropy = entropyValues[iterations];
+            
+            let analysisHTML = '';
+            
+            if (interventionStep === -1) {
+                analysisHTML = `
+                    <p class="mb-2 font-bold text-green-700">System remains coherent throughout all ${iterations} time steps.</p>
+                    <p>Final coherence: ${finalCoherence.toFixed(4)} (${(finalCoherence * 100).toFixed(2)}%)</p>
+                    <p>Final entropy: ${finalEntropy.toFixed(4)} (${(finalEntropy * 100).toFixed(2)}%)</p>
+                    <p class="mt-4">The system maintains sufficient coherence below the patience threshold (P = ${patience}).</p>
+                `;
+            } else {
+                analysisHTML = `
+                    <p class="mb-2 font-bold text-red-700">System requires intervention at time step ${interventionStep}.</p>
+                    <p>Coherence at intervention: ${coherenceValues[interventionStep].toFixed(4)} (${(coherenceValues[interventionStep] * 100).toFixed(2)}%)</p>
+                    <p>Entropy at intervention: ${entropyValues[interventionStep].toFixed(4)} (${(entropyValues[interventionStep] * 100).toFixed(2)}%)</p>
+                    <p class="mt-4">The entropy exceeds the patience threshold (P = ${patience}) at time step ${interventionStep}.</p>
+                `;
+                
+                // Calculate time to intervention
+                const logTerm1 = Math.log((1 - patience) / initialCoherence);
+                const logTerm2 = alpha * Math.log(factor);
+                const theoreticalSteps = logTerm1 / logTerm2;
+                
+                if (!isNaN(theoreticalSteps) && isFinite(theoreticalSteps) && theoreticalSteps > 0) {
+                    analysisHTML += `
+                        <p class="mt-2">According to the formula, intervention would be theoretically required after ${theoreticalSteps.toFixed(2)} steps.</p>
+                    `;
+                }
+            }
+            
+            // Add recommendations based on factor analysis
+            const factorValues = [truth, observation, attention, attunement];
+            const factorNames = ["Truth", "Observation", "Attention", "Attunement"];
+            const minFactor = Math.min(...factorValues);
+            const minFactorIndex = factorValues.indexOf(minFactor);
+            
+            analysisHTML += `
+                <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <h4 class="font-bold text-blue-700 mb-2">System Analysis</h4>
+                    <p>Combined factor (T×O×A×U): ${factor.toFixed(4)}</p>
+                    <p class="mt-2">Weakest component: ${factorNames[minFactorIndex]} (${minFactor.toFixed(2)})</p>
+                    <p class="mt-4 font-bold">Recommendation:</p>
+                    <p>To improve system coherence, focus on increasing ${factorNames[minFactorIndex].toLowerCase()}.</p>
+                </div>
+            `;
+            
+            analysisDiv.innerHTML = analysisHTML;
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            initCharts();
+            
+            // Add button click event
+            document.getElementById('calculate-btn').addEventListener('click', calculateEvolution);
+            
+            // Initialize with default values
+            calculateEvolution();
+        };
+    </script>
+</body>
+</html>
