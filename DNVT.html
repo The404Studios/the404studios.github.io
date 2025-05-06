@@ -1,0 +1,2655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic Network Visualization</title>
+    <style>
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #cbd5e1;
+            --primary: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --purple: #a855f7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+        }
+
+        .sidebar {
+            width: 300px;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        
+        .draggable-items {
+            margin-top: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .draggable-node {
+            padding: 8px;
+            background-color: white;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: grab;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .main {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            width: 300px;
+            z-index: 10;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2, h3 {
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        h3 {
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #2563eb;
+        }
+
+        button.secondary {
+            background-color: var(--text-secondary);
+        }
+
+        button.secondary:hover {
+            background-color: #475569;
+        }
+
+        button.success {
+            background-color: var(--success);
+        }
+
+        button.success:hover {
+            background-color: #059669;
+        }
+
+        button.warning {
+            background-color: var(--warning);
+        }
+
+        button.warning:hover {
+            background-color: #d97706;
+        }
+
+        button.danger {
+            background-color: var(--danger);
+        }
+
+        button.danger:hover {
+            background-color: #dc2626;
+        }
+
+        .node-list {
+            margin-top: 16px;
+        }
+
+        .node-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            background-color: white;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .node-item:hover {
+            border-color: var(--primary);
+        }
+
+        .node-item.active {
+            border-color: var(--primary);
+            background-color: #eff6ff;
+        }
+
+        .node-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 12px;
+        }
+
+        .node-type-symptom .node-color {
+            background-color: var(--primary);
+        }
+
+        .node-type-test .node-color {
+            background-color: var(--success);
+        }
+
+        .node-type-diagnosis .node-color {
+            background-color: var(--danger);
+        }
+
+        .node-type-treatment .node-color {
+            background-color: var(--purple);
+        }
+
+        .node-type-observation .node-color {
+            background-color: var(--warning);
+        }
+
+        .node-name {
+            flex: 1;
+            font-size: 0.875rem;
+        }
+
+        .node-confidence {
+            font-size: 0.75rem;
+            background-color: var(--bg-secondary);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .node-details {
+            margin-top: 16px;
+            background-color: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .property-group {
+            margin-bottom: 16px;
+        }
+
+        .property-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+
+        .property-label {
+            width: 120px;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .property-value {
+            flex: 1;
+            font-size: 0.875rem;
+        }
+
+        .factor-bar {
+            height: 8px;
+            width: 100%;
+            background-color: var(--bg-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .factor-fill {
+            height: 100%;
+            background-color: var(--primary);
+            border-radius: 4px;
+        }
+
+        .tf-fill {
+            background-color: #3b82f6; /* blue */
+        }
+
+        .df-fill {
+            background-color: #ef4444; /* red */
+        }
+
+        .sf-fill {
+            background-color: #10b981; /* green */
+        }
+
+        .cf-fill {
+            background-color: #f59e0b; /* amber */
+        }
+
+        .hf-fill {
+            background-color: #a855f7; /* purple */
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.875rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .tab-container {
+            margin-top: 16px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab-button {
+            padding: 8px 16px;
+            background-color: transparent;
+            color: var(--text-secondary);
+            border: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .tab-button.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .tab-content {
+            padding: 16px 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .time-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .time-display {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .alert {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            font-size: 0.875rem;
+        }
+
+        .alert.success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .alert.warning {
+            background-color: #ffedd5;
+            color: #9a3412;
+        }
+
+        .node-info {
+            position: absolute;
+            background-color: white;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 0.75rem;
+            z-index: 20;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            pointer-events: none;
+        }
+
+        .node-info h4 {
+            margin-bottom: 4px;
+            font-size: 0.875rem;
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background-color: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.75rem;
+            z-index: 10;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        
+        .status-pending {
+            background-color: var(--warning);
+        }
+        
+        .status-completed {
+            background-color: var(--success);
+        }
+        
+        .status-working {
+            background-color: var(--text-secondary);
+        }
+        
+        .status-probable {
+            background-color: var(--primary);
+        }
+        
+        .status-confirmed {
+            background-color: var(--success);
+        }
+        
+        .status-ruled-out {
+            background-color: var(--danger);
+        }
+        
+        .socket-list {
+            margin-top: 12px;
+        }
+        
+        .socket-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 8px;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            background-color: var(--bg-secondary);
+            font-size: 0.75rem;
+        }
+        
+        .socket-fulfilled {
+            background-color: #d1fae5;
+        }
+        
+        .socket-pending {
+            background-color: #ffedd5;
+        }
+        
+        .socket-name {
+            flex: 1;
+        }
+        
+        .socket-type {
+            background-color: rgba(0, 0, 0, 0.1);
+            padding: 2px 4px;
+            border-radius: 2px;
+            margin-right: 6px;
+        }
+        
+        .audit-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+        
+        .audit-item {
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.75rem;
+        }
+        
+        .audit-item:last-child {
+            border-bottom: none;
+        }
+        
+        .audit-time {
+            color: var(--text-secondary);
+            font-size: 0.675rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h1>Diagnostic Network</h1>
+            
+            <div class="draggable-items">
+                <div class="draggable-node" draggable="true" data-type="symptom">
+                    <div class="node-color" style="background-color: #3b82f6;"></div>
+                    <span>Symptom</span>
+                </div>
+                <div class="draggable-node" draggable="true" data-type="diagnosis">
+                    <div class="node-color" style="background-color: #ef4444;"></div>
+                    <span>Diagnosis</span>
+                </div>
+                <div class="draggable-node" draggable="true" data-type="test">
+                    <div class="node-color" style="background-color: #10b981;"></div>
+                    <span>Test</span>
+                </div>
+                <div class="draggable-node" draggable="true" data-type="treatment">
+                    <div class="node-color" style="background-color: #a855f7;"></div>
+                    <span>Treatment</span>
+                </div>
+                <div class="draggable-node" draggable="true" data-type="observation">
+                    <div class="node-color" style="background-color: #f59e0b;"></div>
+                    <span>Observation</span>
+                </div>
+                <div class="draggable-node" draggable="true" data-type="cause">
+                    <div class="node-color" style="background-color: #000000;"></div>
+                    <span>Cause</span>
+                </div>
+            </div>
+            
+            <div class="tab-container">
+                <div class="tab-buttons">
+                    <button class="tab-button active" data-tab="nodes">Nodes</button>
+                    <button class="tab-button" data-tab="analysis">Analysis</button>
+                    <button class="tab-button" data-tab="system">System</button>
+                </div>
+                
+                <div class="tab-content" id="nodes-tab">
+                    <h2>Node List</h2>
+                    <div class="node-list" id="node-list">
+                        <!-- Nodes will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="tab-content hidden" id="analysis-tab">
+                    <h2>Diagnostic Analysis</h2>
+                    <div id="analysis-content">
+                        <div id="top-diagnoses">
+                            <h3>Top Diagnoses</h3>
+                            <div id="diagnoses-list"></div>
+                        </div>
+                        
+                        <div id="critical-tests">
+                            <h3>Critical Tests</h3>
+                            <div id="tests-list"></div>
+                        </div>
+                        
+                        <div id="explanations">
+                            <h3>Explanations</h3>
+                            <div id="explanations-list"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content hidden" id="system-tab">
+                    <h2>System Health</h2>
+                    <div id="system-health">
+                        <div class="property-group">
+                            <div class="property-row">
+                                <div class="property-label">Avg Truth Factor</div>
+                                <div class="property-value" id="avg-tf-value">0.5</div>
+                            </div>
+                            <div class="factor-bar">
+                                <div class="factor-fill tf-fill" id="avg-tf-bar" style="width: 50%;"></div>
+                            </div>
+                            
+                            <div class="property-row">
+                                <div class="property-label">Avg Harmony</div>
+                                <div class="property-value" id="avg-hf-value">0.5</div>
+                            </div>
+                            <div class="factor-bar">
+                                <div class="factor-fill hf-fill" id="avg-hf-bar" style="width: 50%;"></div>
+                            </div>
+                            
+                            <div class="property-row">
+                                <div class="property-label">Socket Fulfillment</div>
+                                <div class="property-value" id="socket-fulfillment-value">0%</div>
+                            </div>
+                            <div class="factor-bar">
+                                <div class="factor-fill sf-fill" id="socket-fulfillment-bar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="time-controls">
+                            <button id="apply-time-btn">Apply Time Passage</button>
+                            <div class="time-display">
+                                <span id="sim-time">Day 1, 00:00</span>
+                            </div>
+                        </div>
+                        
+                        <h3>Global Audit Trail</h3>
+                        <div class="audit-list" id="global-audit">
+                            <!-- Audit items will be added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main">
+            <!-- Graph visualization will be rendered here -->
+            <div id="graph-container"></div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #3b82f6;"></div>
+                    <span>Symptom</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #10b981;"></div>
+                    <span>Test</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #ef4444;"></div>
+                    <span>Diagnosis</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #a855f7;"></div>
+                    <span>Treatment</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #f59e0b;"></div>
+                    <span>Observation</span>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <div id="empty-state">
+                    <h3>Diagnostic Network Demo</h3>
+                    <p style="margin-bottom: 12px; font-size: 0.875rem;">Create nodes and connections to simulate a diagnostic network.</p>
+                    <button id="add-sample-btn">Add Sample Network</button>
+                </div>
+                
+                <div id="node-details" class="hidden">
+                    <!-- Node details will be shown here -->
+                </div>
+                
+                <div id="add-node-form" class="hidden">
+                    <h3>Add New Node</h3>
+                    <div class="form-group">
+                        <label for="node-type">Node Type</label>
+                        <select id="node-type">
+                            <option value="symptom">Symptom</option>
+                            <option value="test">Test</option>
+                            <option value="diagnosis">Diagnosis</option>
+                            <option value="treatment">Treatment</option>
+                            <option value="observation">Observation</option>
+                            <option value="cause">Cause</option>
+                            <option value="verified-cause">Verified Cause</option>
+                            <option value="possible-cause">Possible Cause</option>
+                            <option value="verified-treatment">Verified Treatment</option>
+                            <option value="possible-treatment">Possible Treatment</option>
+                            <option value="next-stage">Next Stage</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="node-color">Node Color</label>
+                        <input type="color" id="node-color" value="#3b82f6">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="node-name">Name</label>
+                        <input type="text" id="node-name" placeholder="Node name">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="node-tf">Truth Factor</label>
+                            <input type="number" id="node-tf" min="0" max="1" step="0.1" value="0.7">
+                        </div>
+                        <div class="form-group">
+                            <label for="node-df">Deception Factor</label>
+                            <input type="number" id="node-df" min="0" max="1" step="0.1" value="0.3">
+                        </div>
+                    </div>
+                    
+                    <!-- Dynamic properties based on node type -->
+                    <div id="dynamic-properties"></div>
+                    
+                    <div class="button-group">
+                        <button id="save-node-btn">Save Node</button>
+                        <button id="cancel-node-btn" class="secondary">Cancel</button>
+                    </div>
+                </div>
+                
+                <div id="add-connection-form" class="hidden">
+                    <h3>Add Connection</h3>
+                    <div class="form-group">
+                        <label for="source-node">Source Node</label>
+                        <select id="source-node"></select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="target-node">Target Node</label>
+                        <select id="target-node"></select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="connection-type">Connection Type</label>
+                        <select id="connection-type">
+                            <option value="reference">Reference (#)</option>
+                            <option value="negation">Negation (~)</option>
+                            <option value="inheritance">Inheritance (!)</option>
+                            <option value="causes">Causes</option>
+                            <option value="treats">Treats</option>
+                            <option value="leads-to">Leads To</option>
+                            <option value="confirms">Confirms</option>
+                            <option value="rules-out">Rules Out</option>
+                            <option value="custom">Custom...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="custom-connection-container" style="display: none;">
+                        <label for="custom-connection">Custom Connection Name</label>
+                        <input type="text" id="custom-connection" placeholder="Enter custom connection">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="connection-color">Connection Color</label>
+                        <input type="color" id="connection-color" value="#94a3b8">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="connection-weight">Weight</label>
+                        <input type="number" id="connection-weight" min="0" max="1" step="0.1" value="0.7">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="connection-mandatory"> 
+                            Mandatory Connection
+                        </label>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button id="save-connection-btn">Save Connection</button>
+                        <button id="cancel-connection-btn" class="secondary">Cancel</button>
+                    </div>
+                </div>
+                
+                <div id="edit-test-form" class="hidden">
+                    <h3>Complete Test</h3>
+                    <div class="form-group">
+                        <label for="test-result">Test Result</label>
+                        <select id="test-result">
+                            <option value="positive">Positive</option>
+                            <option value="negative">Negative</option>
+                            <option value="normal">Normal</option>
+                            <option value="abnormal">Abnormal</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="test-precision">Test Precision</label>
+                        <input type="number" id="test-precision" min="0" max="1" step="0.1" value="0.9">
+                    </div>
+                    
+                    <div class="button-group">
+                        <button id="complete-test-btn">Complete Test</button>
+                        <button id="cancel-test-btn" class="secondary">Cancel</button>
+                    </div>
+                </div>
+                
+                <div class="button-group" id="main-buttons">
+                    <button id="add-node-btn">Add Node</button>
+                    <button id="add-connection-btn">Add Connection</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script>
+        // Core diagnostic node class
+        class DiagnosticNode {
+            constructor(id, name, type, initialTf = 0.5, initialDf = 0.5) {
+                this.id = id;
+                this.name = name;
+                this.type = type; // 'symptom', 'test', 'diagnosis', 'treatment', 'observation'
+                
+                // Core factors
+                this.tf = initialTf;   // Truth Factor
+                this.df = initialDf;   // Deception Factor
+                this.sf = 0.5;         // Stability Factor
+                this.cf = 0.5;         // Collapse Factor
+                this.hf = 0.5;         // Harmony Factor
+                this.rf = 0.2;         // Resonance Factor
+                
+                // Temporal attributes
+                this.timestamp = Date.now();
+                this.decayRate = 0.02;
+                this.lastUpdated = Date.now();
+                this.temporalState = []; // Historical state tracking
+                
+                // Socket connections
+                this.sockets = [];
+                this.incomingSockets = [];
+                
+                // Audit trail
+                this.auditLog = [];
+                
+                // Calculate confidence
+                this.confidence = this.calculateConfidence();
+                
+                // Node-specific attributes based on type
+                if (type === 'symptom') {
+                    this.duration = null;
+                    this.severity = null;
+                    this.reportedBy = 'patient';
+                } else if (type === 'test') {
+                    this.status = 'pending';
+                    this.result = null;
+                    this.precision = 0.9;
+                    this.sensitivity = 0.9;
+                    this.specificity = 0.9;
+                } else if (type === 'diagnosis') {
+                    this.prevalence = 0.1;
+                    this.severity = 5; // 1-10
+                    this.confirmedStatus = 'working'; // working, confirmed, ruled-out
+                } else if (type === 'treatment') {
+                    this.efficacy = 0.7;
+                    this.status = 'proposed'; // proposed, active, completed, stopped
+                } else if (type === 'observation') {
+                    this.observer = 'clinician';
+                    this.objectivity = 0.8;
+                }
+                
+                // Visual properties
+                this.visualProperties = this.getVisualProperties();
+                
+                // Record initial state
+                this.recordState();
+            }
+            
+            calculateConfidence() {
+                // Weight the factors appropriately
+                const weights = {
+                    tf: 0.5,    // Truth factor (positive)
+                    sf: 0.3,    // Stability factor (positive)
+                    cf: -0.2,   // Collapse factor (negative)
+                    hf: 0.2,    // Harmony factor (positive)
+                    df: -0.4,   // Deception factor (negative)
+                };
+                
+                let confidence = 0;
+                
+                // Apply weights to each factor
+                Object.keys(weights).forEach(factor => {
+                    if (this[factor] !== undefined) {
+                        confidence += this[factor] * weights[factor];
+                    }
+                });
+                
+                // Normalize to 0-1 range
+                return Math.min(1, Math.max(0, confidence + 0.5));
+            }
+            
+            recordState() {
+                this.temporalState.push({
+                    timestamp: Date.now(),
+                    factors: {
+                        tf: this.tf,
+                        df: this.df,
+                        sf: this.sf,
+                        cf: this.cf,
+                        hf: this.hf,
+                    },
+                    confidence: this.confidence
+                });
+                
+                // Limit history size
+                if (this.temporalState.length > 10) {
+                    this.temporalState = this.temporalState.slice(-10);
+                }
+            }
+            
+            applyGrowth(reinforcementStrength = 1.0) {
+                const previousState = {
+                    tf: this.tf,
+                    df: this.df,
+                    sf: this.sf,
+                    hf: this.hf
+                };
+                
+                // Apply growth
+                const growthAmount = 0.1 * reinforcementStrength;
+                
+                this.tf = Math.min(0.95, this.tf + growthAmount);
+                this.df = Math.max(0.05, this.df - (growthAmount * 0.8));
+                this.sf = Math.min(0.9, this.sf + (growthAmount * 0.5));
+                this.hf = Math.min(0.9, this.hf + (growthAmount * 0.3));
+                
+                // Recalculate confidence
+                this.confidence = this.calculateConfidence();
+                
+                // Update visual properties
+                this.updateVisualProperties();
+                
+                // Record state
+                this.recordState();
+                
+                // Log to audit trail
+                this.logToAudit('growth', `Applied growth reinforcement (strength: ${reinforcementStrength.toFixed(2)})`);
+                
+                return { previousState, currentState: { tf: this.tf, df: this.df, sf: this.sf, hf: this.hf } };
+            }
+            
+            applyDecay(hoursElapsed) {
+                const previousState = {
+                    tf: this.tf,
+                    df: this.df,
+                    sf: this.sf,
+                    hf: this.hf
+                };
+                
+                // Calculate base decay amount
+                const decayAmount = this.decayRate * hoursElapsed * 0.5;
+                
+                // Update factors
+                this.tf = Math.max(0.1, this.tf - decayAmount);
+                this.df = Math.min(0.9, this.df + (decayAmount * 0.7));
+                this.sf = Math.max(0.1, this.sf - (decayAmount * 0.6));
+                this.hf = Math.max(0.1, this.hf - (decayAmount * 0.4));
+                
+                // Recalculate confidence
+                this.confidence = this.calculateConfidence();
+                
+                // Update visual properties
+                this.updateVisualProperties();
+                
+                // Record state
+                this.recordState();
+                
+                // Log to audit trail
+                this.logToAudit('decay', `Applied temporal decay after ${hoursElapsed.toFixed(1)} hours`);
+                
+                return { previousState, currentState: { tf: this.tf, df: this.df, sf: this.sf, hf: this.hf } };
+            }
+            
+            addSocket(targetId, socketType, weight = 0.7, options = {}) {
+                const socket = {
+                    id: `socket-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                    type: socketType,
+                    target: targetId,
+                    fulfilled: options.fulfilled || false,
+                    weight: weight,
+                    created: Date.now(),
+                    mandatory: options.mandatory || false,
+                    negated: options.negated || false
+                };
+                
+                this.sockets.push(socket);
+                
+                // Log to audit trail
+                this.logToAudit('socket_created', `Created ${socket.fulfilled ? 'fulfilled' : 'unfulfilled'} socket to ${targetId}`);
+                
+                return socket;
+            }
+            
+            logToAudit(type, description) {
+                const auditEntry = {
+                    id: `audit-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                    timestamp: new Date().toLocaleTimeString(),
+                    type: type,
+                    description: description
+                };
+                
+                this.auditLog.push(auditEntry);
+                
+                // Limit audit trail size
+                if (this.auditLog.length > 20) {
+                    this.auditLog = this.auditLog.slice(-20);
+                }
+                
+                return auditEntry;
+            }
+            
+            getVisualProperties() {
+                // Set default visual properties based on node type
+                let color, size;
+                
+                switch(this.type) {
+                    case 'symptom':
+                        color = '#3b82f6'; // Blue
+                        size = 8;
+                        break;
+                    case 'test':
+                        color = '#10b981'; // Green
+                        size = 10;
+                        break;
+                    case 'diagnosis':
+                        color = '#ef4444'; // Red
+                        size = 12;
+                        break;
+                    case 'treatment':
+                        color = '#a855f7'; // Purple
+                        size = 10;
+                        break;
+                    case 'observation':
+                        color = '#f59e0b'; // Amber
+                        size = 8;
+                        break;
+                    default:
+                        color = '#64748b'; // Gray
+                        size = 8;
+                }
+                
+                return {
+                    color: color,
+                    size: size,
+                    x: null,  // Will be set by force simulation
+                    y: null
+                };
+            }
+            
+            updateVisualProperties() {
+                // Update size based on confidence for diagnoses
+                if (this.type === 'diagnosis') {
+                    this.visualProperties.size = 10 + (this.confidence * 10);
+                }
+                
+                // Update color opacity based on confidence
+                // (This would require a more complex color handling system)
+            }
+        }
+        
+        // Diagnostic network system
+        class DiagnosticSystem {
+            constructor() {
+                this.nodes = {};
+                this.nodeIds = [];
+                this.connections = [];
+                this.systemHealth = {
+                    avgTruthFactor: 0.5,
+                    avgDeceptionFactor: 0.5,
+                    avgHarmonyFactor: 0.5,
+                    socketFulfillment: 0,
+                    lastUpdate: Date.now(),
+                    temporalStability: 0.7
+                };
+                this.globalAuditTrail = [];
+                this.simulationTime = {
+                    days: 1,
+                    hours: 0,
+                    minutes: 0
+                };
+                this.config = {
+                    enableTemporalDecay: true,
+                    timeScale: 1
+                };
+                this.analyticResults = {
+                    topDiagnoses: [],
+                    criticalTests: [],
+                    explanations: []
+                };
+            }
+            
+            generateId(type) {
+                const typePrefix = type.charAt(0);
+                const randomId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+                return `${typePrefix}-${randomId}`;
+            }
+            
+            addNode(node) {
+                this.nodes[node.id] = node;
+                this.nodeIds.push(node.id);
+                
+                // Log to global audit
+                this.logToGlobalAudit('node_added', `Added ${node.type} node: ${node.name}`);
+                
+                // Update analytics
+                this.updateAnalytics();
+                
+                return node;
+            }
+            
+            createNode(name, type, properties = {}) {
+                const id = this.generateId(type);
+                const node = new DiagnosticNode(
+                    id,
+                    name,
+                    type,
+                    properties.tf || 0.7,
+                    properties.df || 0.3
+                );
+                
+                // Add type-specific properties
+                if (type === 'symptom' && properties.severity) {
+                    node.severity = properties.severity;
+                } else if (type === 'test' && properties.status) {
+                    node.status = properties.status;
+                    node.result = properties.result || null;
+                    if (node.status === 'completed') {
+                        node.tf = 0.9;
+                        node.df = 0.1;
+                    }
+                } else if (type === 'diagnosis' && properties.confirmedStatus) {
+                    node.confirmedStatus = properties.confirmedStatus;
+                } else if (type === 'treatment' && properties.status) {
+                    node.status = properties.status;
+                }
+                
+                return this.addNode(node);
+            }
+            
+            connectNodes(sourceId, targetId, connectionType, weight = 0.7, options = {}) {
+                const sourceNode = this.nodes[sourceId];
+                const targetNode = this.nodes[targetId];
+                
+                if (!sourceNode || !targetNode) {
+                    return { success: false, error: 'Source or target node not found' };
+                }
+                
+                // Add socket to source node
+                const socket = sourceNode.addSocket(targetId, connectionType, weight, options);
+                
+                // Add to target's incoming connections
+                targetNode.incomingSockets.push({
+                    id: socket.id,
+                    sourceId: sourceId,
+                    type: connectionType,
+                    created: Date.now(),
+                    weight: weight,
+                    mandatory: options.mandatory || false,
+                    negated: options.negated || false,
+                    color: options.color || null
+                });
+                
+                // Add to connections list for visualization
+                this.connections.push({
+                    source: sourceId,
+                    target: targetId,
+                    id: socket.id,
+                    type: connectionType,
+                    weight: weight,
+                    mandatory: options.mandatory || false,
+                    negated: options.negated || false,
+                    color: options.color || null
+                });
+                
+                // Log to global audit
+                this.logToGlobalAudit('connection_created', `Connected ${sourceNode.name} to ${targetNode.name} via ${connectionType}`);
+                
+                // Update analytics
+                this.updateAnalytics();
+                
+                return { success: true, socket };
+            }
+            
+            completeTest(testId, result, precision = 0.9) {
+                const test = this.nodes[testId];
+                
+                if (!test || test.type !== 'test') {
+                    return { success: false, error: 'Test node not found' };
+                }
+                
+                const previousStatus = test.status;
+                
+                // Update test properties
+                test.status = 'completed';
+                test.result = result;
+                test.precision = precision;
+                test.lastUpdated = Date.now();
+                
+                // Apply growth reinforcement
+                test.applyGrowth(precision);
+                
+                // Log to global audit
+                this.logToGlobalAudit('test_completed', `Completed test ${test.name} with result: ${result}`);
+                
+                // Update diagnoses that depend on this test
+                this.updateDiagnosesForCompletedTest(testId, result);
+                
+                // Update analytics
+                this.updateAnalytics();
+                
+                return { success: true, test };
+            }
+            
+            updateDiagnosesForCompletedTest(testId, result) {
+                // Find diagnoses that have sockets requiring this test
+                Object.values(this.nodes).forEach(node => {
+                    if (node.type === 'diagnosis') {
+                        node.sockets.forEach(socket => {
+                            if (socket.target === testId) {
+                                // Mark socket as fulfilled
+                                socket.fulfilled = true;
+                                
+                                // Log to node's audit trail
+                                node.logToAudit('socket_fulfilled', `Socket fulfilled by test completion: ${this.nodes[testId].name} = ${result}`);
+                                
+                                // Apply test result impact to diagnosis factors
+                                this.applyTestResultToDiagnosis(node, testId, result);
+                            }
+                        });
+                    }
+                });
+                
+                // Update socket fulfillment health metric
+                this.recalculateSystemHealth();
+            }
+            
+            applyTestResultToDiagnosis(diagnosis, testId, result) {
+                // Get the test node
+                const test = this.nodes[testId];
+                if (!test) return;
+                
+                // Get socket to determine if negated
+                const socket = diagnosis.sockets.find(s => s.target === testId);
+                if (!socket) return;
+                
+                const isNegated = socket.negated;
+                
+                // Determine if result is positive or negative for this diagnosis
+                const positiveResults = ['positive', 'present', 'abnormal', 'detected', 'elevated', 'true', 'yes'];
+                const negativeResults = ['negative', 'absent', 'normal', 'undetected', 'not elevated', 'false', 'no'];
+                
+                let isPositive = false;
+                
+                if (positiveResults.includes(result.toString().toLowerCase())) {
+                    isPositive = !isNegated; // If negated socket, positive result is negative for diagnosis
+                } else if (negativeResults.includes(result.toString().toLowerCase())) {
+                    isPositive = isNegated; // If negated socket, negative result is positive for diagnosis
+                } else {
+                    isPositive = !isNegated; // Default assumption
+                }
+                
+                // Calculate impact based on result and precision
+                const precision = test.precision || 0.9;
+                const baseImpact = 0.2 * precision;
+                
+                if (isPositive) {
+                    // Positive result for diagnosis - strengthen factors
+                    diagnosis.tf = Math.min(0.95, diagnosis.tf + baseImpact);
+                    diagnosis.df = Math.max(0.05, diagnosis.df - baseImpact);
+                    diagnosis.hf = Math.min(0.9, diagnosis.hf + (baseImpact * 0.8));
+                } else {
+                    // Negative result for diagnosis - weaken factors
+                    diagnosis.tf = Math.max(0.05, diagnosis.tf - baseImpact);
+                    diagnosis.df = Math.min(0.95, diagnosis.df + baseImpact);
+                    diagnosis.hf = Math.max(0.1, diagnosis.hf - (baseImpact * 0.6));
+                }
+                
+                // Recalculate confidence
+                diagnosis.confidence = diagnosis.calculateConfidence();
+                
+                // Update visual properties
+                diagnosis.updateVisualProperties();
+                
+                // Record state change
+                diagnosis.recordState();
+                
+                // Determine if diagnosis status should change based on confidence
+                if (diagnosis.confidence > 0.85 && diagnosis.confirmedStatus === 'working') {
+                    diagnosis.confirmedStatus = 'probable';
+                } else if (diagnosis.confidence < 0.2 && diagnosis.confirmedStatus !== 'ruled-out') {
+                    diagnosis.confirmedStatus = 'ruled-out';
+                }
+                
+                // Log to diagnosis audit trail
+                diagnosis.logToAudit('test_impact', `Updated factors based on ${test.name} result: ${result} (${isPositive ? 'positive' : 'negative'} for diagnosis)`);
+                
+                // Log to global audit trail
+                this.logToGlobalAudit('diagnosis_updated', `Diagnosis ${diagnosis.name} updated based on ${test.name} result: ${result}`);
+            }
+            
+            applyTemporalUpdates() {
+                if (!this.config.enableTemporalDecay) {
+                    return { updated: false, reason: 'Temporal decay disabled' };
+                }
+                
+                // Advance simulation time
+                this.advanceTime(2); // Advance 2 hours
+                
+                const updates = {
+                    updated: true,
+                    nodesUpdated: 0,
+                    tfDecayTotal: 0
+                };
+                
+                // Apply decay to all nodes
+                Object.values(this.nodes).forEach(node => {
+                    const timeSinceUpdate = 2; // Fixed 2 hour update for simplicity
+                    
+                    const previousConfidence = node.confidence;
+                    const decayResult = node.applyDecay(timeSinceUpdate);
+                    
+                    updates.nodesUpdated++;
+                    updates.tfDecayTotal += (decayResult.previousState.tf - node.tf);
+                });
+                
+                // Recalculate system health
+                this.recalculateSystemHealth();
+                
+                // Update analytics
+                this.updateAnalytics();
+                
+                // Log to global audit trail
+                this.logToGlobalAudit('temporal_update', `Applied temporal decay to ${updates.nodesUpdated} nodes`);
+                
+                return updates;
+            }
+            
+            advanceTime(hours) {
+                // Add hours to simulation time
+                this.simulationTime.hours += hours;
+                
+                // Handle day rollover
+                while (this.simulationTime.hours >= 24) {
+                    this.simulationTime.hours -= 24;
+                    this.simulationTime.days++;
+                }
+                
+                return this.getFormattedTime();
+            }
+            
+            getFormattedTime() {
+                const padZero = (num) => num.toString().padStart(2, '0');
+                return `Day ${this.simulationTime.days}, ${padZero(this.simulationTime.hours)}:${padZero(this.simulationTime.minutes)}`;
+            }
+            
+            recalculateSystemHealth() {
+                const nodes = Object.values(this.nodes);
+                
+                if (nodes.length === 0) {
+                    return;
+                }
+                
+                // Calculate average factors
+                let totalTf = 0, totalDf = 0, totalHf = 0;
+                
+                nodes.forEach(node => {
+                    totalTf += node.tf;
+                    totalDf += node.df;
+                    totalHf += node.hf;
+                });
+                
+                this.systemHealth.avgTruthFactor = totalTf / nodes.length;
+                this.systemHealth.avgDeceptionFactor = totalDf / nodes.length;
+                this.systemHealth.avgHarmonyFactor = totalHf / nodes.length;
+                
+                // Calculate socket fulfillment
+                let totalSockets = 0;
+                let fulfilledSockets = 0;
+                
+                nodes.forEach(node => {
+                    totalSockets += node.sockets.length;
+                    fulfilledSockets += node.sockets.filter(s => s.fulfilled).length;
+                });
+                
+                this.systemHealth.socketFulfillment = totalSockets > 0 ? 
+                    fulfilledSockets / totalSockets : 0;
+                
+                // Update last update time
+                this.systemHealth.lastUpdate = Date.now();
+            }
+            
+            updateAnalytics() {
+                // Get all diagnoses
+                const diagnoses = Object.values(this.nodes).filter(node => node.type === 'diagnosis');
+                
+                // Sort by confidence
+                const sortedDiagnoses = [...diagnoses].sort((a, b) => b.confidence - a.confidence);
+                
+                // Store top diagnoses
+                this.analyticResults.topDiagnoses = sortedDiagnoses.slice(0, 3).map(d => ({
+                    id: d.id,
+                    name: d.name,
+                    confidence: d.confidence,
+                    confirmedStatus: d.confirmedStatus
+                }));
+                
+                // Identify critical tests
+                this.analyticResults.criticalTests = this.identifyCriticalTests();
+                
+                // Generate explanations
+                this.analyticResults.explanations = this.generateExplanations();
+            }
+            
+            identifyCriticalTests() {
+                // Get top diagnoses
+                const topDiagnoses = this.analyticResults.topDiagnoses.slice(0, 2)
+                    .map(d => this.nodes[d.id])
+                    .filter(Boolean);
+                
+                if (topDiagnoses.length < 1) return [];
+                
+                // Get all pending tests from these diagnoses
+                const pendingTestIds = new Set();
+                
+                topDiagnoses.forEach(diagnosis => {
+                    diagnosis.sockets
+                        .filter(s => !s.fulfilled && this.nodes[s.target]?.type === 'test')
+                        .forEach(socket => pendingTestIds.add(socket.target));
+                });
+                
+                // Convert to array and get test nodes
+                return Array.from(pendingTestIds)
+                    .map(id => this.nodes[id])
+                    .filter(Boolean)
+                    .map(test => ({
+                        id: test.id,
+                        name: test.name,
+                        relevantDiagnoses: topDiagnoses
+                            .filter(d => d.sockets.some(s => s.target === test.id))
+                            .map(d => d.name)
+                    }))
+                    .slice(0, 3);
+            }
+            
+            generateExplanations() {
+                return this.analyticResults.topDiagnoses.slice(0, 2).map(diagnosis => {
+                    const node = this.nodes[diagnosis.id];
+                    if (!node) return null;
+                    
+                    // Count fulfilled and unfulfilled sockets
+                    const fulfilledSockets = node.sockets.filter(s => s.fulfilled);
+                    const pendingSockets = node.sockets.filter(s => !s.fulfilled);
+                    
+                    // Generate explanation
+                    let explanation = `${node.name} (${Math.round(node.confidence * 100)}% confidence): `;
+                    
+                    if (fulfilledSockets.length > 0) {
+                        const fulfilledNames = fulfilledSockets.map(s => this.nodes[s.target]?.name || 'Unknown')
+                            .filter(Boolean);
+                        explanation += `Supported by ${fulfilledNames.join(', ')}. `;
+                    }
+                    
+                    if (pendingSockets.length > 0) {
+                        const pendingNames = pendingSockets.map(s => this.nodes[s.target]?.name || 'Unknown')
+                            .filter(Boolean);
+                        explanation += `Pending confirmation from ${pendingNames.join(', ')}.`;
+                    }
+                    
+                    return {
+                        diagnosisId: diagnosis.id,
+                        diagnosisName: diagnosis.name,
+                        confidence: diagnosis.confidence,
+                        explanation: explanation
+                    };
+                }).filter(Boolean);
+            }
+            
+            logToGlobalAudit(type, description) {
+                const auditEntry = {
+                    id: `global-audit-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                    timestamp: new Date().toLocaleTimeString(),
+                    type: type,
+                    description: description
+                };
+                
+                this.globalAuditTrail.push(auditEntry);
+                
+                // Limit audit trail size
+                if (this.globalAuditTrail.length > 50) {
+                    this.globalAuditTrail = this.globalAuditTrail.slice(-50);
+                }
+                
+                return auditEntry;
+            }
+            
+            // Create a sample diagnostic network
+            createSampleNetwork() {
+                // Create symptoms
+                const s1 = this.createNode('Shortness of Breath', 'symptom', { severity: 6 });
+                const s2 = this.createNode('Fatigue', 'symptom', { severity: 5 });
+                const s3 = this.createNode('Cough', 'symptom', { severity: 7 });
+                const s4 = this.createNode('Fever', 'symptom', { severity: 4 });
+                
+                // Create tests
+                const t1 = this.createNode('Chest X-ray', 'test');
+                const t2 = this.createNode('Blood Oxygen', 'test');
+                const t3 = this.createNode('COVID-19 Test', 'test');
+                const t4 = this.createNode('BNP Test', 'test');
+                
+                // Create diagnoses
+                const d1 = this.createNode('COVID-19', 'diagnosis');
+                const d2 = this.createNode('Heart Failure', 'diagnosis');
+                const d3 = this.createNode('Pneumonia', 'diagnosis');
+                
+                // Create treatments
+                const tr1 = this.createNode('Antiviral Therapy', 'treatment');
+                const tr2 = this.createNode('Diuretics', 'treatment');
+                const tr3 = this.createNode('Antibiotics', 'treatment');
+                
+                // Connect symptoms to diagnoses
+                this.connectNodes(d1.id, s3.id, 'reference', 0.8, { mandatory: true });
+                this.connectNodes(d1.id, s4.id, 'reference', 0.7, { mandatory: true });
+                this.connectNodes(d1.id, s1.id, 'reference', 0.6);
+                
+                this.connectNodes(d2.id, s1.id, 'reference', 0.9, { mandatory: true });
+                this.connectNodes(d2.id, s2.id, 'reference', 0.8, { mandatory: true });
+                
+                this.connectNodes(d3.id, s3.id, 'reference', 0.8, { mandatory: true });
+                this.connectNodes(d3.id, s1.id, 'reference', 0.7, { mandatory: true });
+                this.connectNodes(d3.id, s4.id, 'reference', 0.6);
+                
+                // Connect tests to diagnoses
+                this.connectNodes(d1.id, t3.id, 'reference', 0.9, { mandatory: true });
+                this.connectNodes(d2.id, t4.id, 'reference', 0.8, { mandatory: true });
+                this.connectNodes(d2.id, t1.id, 'reference', 0.7);
+                this.connectNodes(d3.id, t1.id, 'reference', 0.9, { mandatory: true });
+                
+                // Connect treatments to diagnoses
+                this.connectNodes(d1.id, tr1.id, 'reference', 0.8);
+                this.connectNodes(d2.id, tr2.id, 'reference', 0.9);
+                this.connectNodes(d3.id, tr3.id, 'reference', 0.9);
+                
+                // Connect symptoms to tests
+                this.connectNodes(s1.id, t2.id, 'reference', 0.7);
+                this.connectNodes(s3.id, t1.id, 'reference', 0.8);
+                
+                // Create negations (differential diagnoses)
+                this.connectNodes(d1.id, d3.id, 'negation', 0.7);
+                this.connectNodes(d3.id, d1.id, 'negation', 0.7);
+                
+                // Complete a test
+                this.completeTest(t2.id, 'abnormal', 0.9);
+                
+                // Update system health
+                this.recalculateSystemHealth();
+                
+                return { success: true, message: 'Sample network created' };
+            }
+            
+            // Get data needed for visualization
+            getNetworkData() {
+                return {
+                    nodes: Object.values(this.nodes).map(node => ({
+                        id: node.id,
+                        name: node.name,
+                        type: node.type,
+                        confidence: node.confidence,
+                        tf: node.tf,
+                        df: node.df,
+                        sf: node.sf,
+                        hf: node.hf,
+                        ...node.visualProperties,
+                        // Type-specific properties
+                        ...(node.type === 'test' ? { status: node.status, result: node.result } : {}),
+                        ...(node.type === 'diagnosis' ? { confirmedStatus: node.confirmedStatus } : {}),
+                        ...(node.type === 'symptom' ? { severity: node.severity } : {}),
+                        ...(node.type === 'treatment' ? { status: node.status } : {})
+                    })),
+                    links: this.connections.map(conn => ({
+                        source: conn.source,
+                        target: conn.target,
+                        type: conn.type,
+                        weight: conn.weight,
+                        mandatory: conn.mandatory,
+                        negated: conn.negated
+                    }))
+                };
+            }
+        }
+        
+        // UI Controller
+        class UIController {
+            constructor() {
+                this.system = new DiagnosticSystem();
+                this.selectedNode = null;
+                this.simulation = null;
+                this.draggedNodeType = null;
+                this.connectionMode = false;
+                this.connectionSource = null;
+                this.initGraph();
+                this.initUI();
+                this.initDragAndDrop();
+            }
+            
+            initDragAndDrop() {
+                // Make nodes draggable
+                document.querySelectorAll('.draggable-node').forEach(node => {
+                    node.addEventListener('dragstart', (e) => {
+                        this.draggedNodeType = node.getAttribute('data-type');
+                        e.dataTransfer.setData('text/plain', this.draggedNodeType);
+                        e.dataTransfer.effectAllowed = 'copy';
+                    });
+                    
+                    node.addEventListener('dragend', () => {
+                        this.draggedNodeType = null;
+                    });
+                });
+                
+                // Make graph container a drop target
+                const container = document.getElementById('graph-container');
+                
+                container.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'copy';
+                });
+                
+                container.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    if (this.draggedNodeType) {
+                        // Get drop position relative to container
+                        const rect = container.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        
+                        // Create a node at this position
+                        this.createNodeAtPosition(this.draggedNodeType, x, y);
+                    }
+                });
+            }
+            
+            createNodeAtPosition(type, x, y) {
+                // Show a dialog to get node name
+                const nodeName = prompt(`Enter a name for the new ${type}:`, `New ${type}`);
+                if (!nodeName) return; // User cancelled
+                
+                // Get color
+                const defaultColors = {
+                    'symptom': '#3b82f6',
+                    'test': '#10b981',
+                    'diagnosis': '#ef4444',
+                    'treatment': '#a855f7',
+                    'observation': '#f59e0b',
+                    'cause': '#000000',
+                    'verified-cause': '#000000',
+                    'possible-cause': '#666666',
+                    'verified-treatment': '#a855f7',
+                    'possible-treatment': '#d8b4fe',
+                    'next-stage': '#2563eb'
+                };
+                
+                const color = prompt('Enter node color (hex code):', defaultColors[type] || '#3b82f6');
+                
+                // Create node with custom position and color
+                const node = this.system.createNode(nodeName, type, {
+                    tf: 0.7,
+                    df: 0.3
+                });
+                
+                // Set position and color
+                node.visualProperties.x = x;
+                node.visualProperties.y = y;
+                node.visualProperties.color = color;
+                
+                // Fix position initially to prevent simulation moving it
+                node.fx = x;
+                node.fy = y;
+                
+                // Update UI
+                this.updateGraph();
+                this.updateNodeList();
+                this.selectNode(node);
+                
+                return node;
+            }
+            
+            initUI() {
+                // Tab navigation
+                document.querySelectorAll('.tab-button').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const tabId = button.getAttribute('data-tab');
+                        this.showTab(tabId);
+                    });
+                });
+                
+                // Button event listeners
+                document.getElementById('add-sample-btn').addEventListener('click', () => this.addSampleNetwork());
+                document.getElementById('add-node-btn').addEventListener('click', () => this.showAddNodeForm());
+                document.getElementById('add-connection-btn').addEventListener('click', () => this.showConnectionForm());
+                document.getElementById('save-node-btn').addEventListener('click', () => this.saveNewNode());
+                document.getElementById('cancel-node-btn').addEventListener('click', () => this.hideAddNodeForm());
+                document.getElementById('save-connection-btn').addEventListener('click', () => this.saveNewConnection());
+                document.getElementById('cancel-connection-btn').addEventListener('click', () => this.hideConnectionForm());
+                document.getElementById('complete-test-btn').addEventListener('click', () => this.completeTest());
+                document.getElementById('cancel-test-btn').addEventListener('click', () => this.hideTestForm());
+                document.getElementById('apply-time-btn').addEventListener('click', () => this.applyTimePassage());
+                
+                // Node type change event
+                document.getElementById('node-type').addEventListener('change', () => this.updateDynamicProperties());
+                
+                // Initial UI update
+                this.updateSystemHealthUI();
+            }
+            
+            initGraph() {
+                const width = document.getElementById('graph-container').clientWidth;
+                const height = document.getElementById('graph-container').clientHeight || 600;
+                
+                // Create SVG
+                const svg = d3.select('#graph-container')
+                    .append('svg')
+                    .attr('width', '100%')
+                    .attr('height', '100%')
+                    .attr('viewBox', [0, 0, width, height])
+                    .attr('style', 'max-width: 100%; height: auto;');
+                
+                // Define arrow marker for directed links
+                svg.append('defs').append('marker')
+                    .attr('id', 'arrow')
+                    .attr('viewBox', '0 -5 10 10')
+                    .attr('refX', 20)
+                    .attr('refY', 0)
+                    .attr('markerWidth', 6)
+                    .attr('markerHeight', 6)
+                    .attr('orient', 'auto')
+                    .append('path')
+                    .attr('fill', '#666')
+                    .attr('d', 'M0,-5L10,0L0,5');
+                
+                // Create container for links and nodes
+                svg.append('g').attr('class', 'links');
+                svg.append('g').attr('class', 'nodes');
+                
+                // Initialize force simulation
+                this.simulation = d3.forceSimulation()
+                    .force('link', d3.forceLink().id(d => d.id).distance(100))
+                    .force('charge', d3.forceManyBody().strength(-300))
+                    .force('center', d3.forceCenter(width / 2, height / 2))
+                    .on('tick', () => this.ticked());
+                
+                // Create node hover info div
+                this.nodeInfo = d3.select('body').append('div')
+                    .attr('class', 'node-info')
+                    .style('opacity', 0);
+                    
+                // Add double-click handler to create node
+                svg.on('dblclick', (event) => {
+                    const coords = d3.pointer(event);
+                    this.createNodeAtPosition('symptom', coords[0], coords[1]);
+                });
+            }
+            
+            updateGraph() {
+                const data = this.system.getNetworkData();
+                const svg = d3.select('#graph-container svg');
+                
+                // Update links
+                const link = svg.select('.links')
+                    .selectAll('line')
+                    .data(data.links, d => `${d.source}-${d.target}-${d.type}`);
+                
+                // Exit old links
+                link.exit().remove();
+                
+                // Create new links
+                const linkEnter = link.enter().append('line')
+                    .attr('stroke-width', d => 1 + (d.weight * 2))
+                    .attr('stroke', d => {
+                        if (d.color) return d.color;
+                        if (d.negated) return '#ef4444'; // Red for negation
+                        return d.mandatory ? '#3b82f6' : '#94a3b8'; // Blue for mandatory, gray for optional
+                    })
+                    .attr('stroke-dasharray', d => {
+                        if (d.type === 'negation') return '5,5';
+                        if (d.type === 'inheritance') return '10,3';
+                        if (d.type === 'rules-out') return '5,5';
+                        if (d.type === 'possible-cause' || d.type === 'possible-treatment') return '3,3';
+                        return null;
+                    })
+                    .attr('opacity', 0.6)
+                    .attr('marker-end', d => {
+                        // Add arrow markers for directed relationships
+                        const directedTypes = ['causes', 'treats', 'leads-to', 'confirms'];
+                        return directedTypes.includes(d.type) ? 'url(#arrow)' : null;
+                    });
+                
+                // Merge links
+                this.links = linkEnter.merge(link);
+                
+                // Update nodes
+                const node = svg.select('.nodes')
+                    .selectAll('.node')
+                    .data(data.nodes, d => d.id);
+                
+                // Exit old nodes
+                node.exit().remove();
+                
+                // Create new nodes
+                const nodeEnter = node.enter().append('g')
+                    .attr('class', 'node')
+                    .call(d3.drag()
+                        .on('start', (event, d) => this.dragstarted(event, d))
+                        .on('drag', (event, d) => this.dragged(event, d))
+                        .on('end', (event, d) => this.dragended(event, d)))
+                    .on('click', (event, d) => this.selectNode(d))
+                    .on('mouseover', (event, d) => this.nodeMouseover(event, d))
+                    .on('mouseout', () => this.nodeMouseout());
+                
+                // Add circle to node
+                nodeEnter.append('circle')
+                    .attr('r', d => d.size)
+                    .attr('fill', d => d.color)
+                    .attr('opacity', d => {
+                        if (d.type === 'test' && d.status === 'pending') return 0.5;
+                        if (d.type === 'diagnosis' && d.confirmedStatus === 'ruled-out') return 0.3;
+                        return 0.8;
+                    })
+                    .attr('stroke', '#ffffff')
+                    .attr('stroke-width', 1.5);
+                
+                // Add text label to node
+                nodeEnter.append('text')
+                    .attr('dy', d => d.size + 12)
+                    .attr('text-anchor', 'middle')
+                    .attr('font-size', '10px')
+                    .attr('fill', '#1e293b')
+                    .text(d => d.name);
+                
+                // Merge nodes
+                this.nodes = nodeEnter.merge(node);
+                
+                // Update node appearance
+                this.nodes.select('circle')
+                    .attr('r', d => d.size)
+                    .attr('opacity', d => {
+                        if (d.type === 'test' && d.status === 'pending') return 0.5;
+                        if (d.type === 'diagnosis' && d.confirmedStatus === 'ruled-out') return 0.3;
+                        return 0.8;
+                    });
+                
+                // Update simulation
+                this.simulation.nodes(data.nodes);
+                this.simulation.force('link').links(data.links);
+                this.simulation.alpha(0.3).restart();
+            }
+            
+            ticked() {
+                if (!this.links || !this.nodes) return;
+                
+                this.links
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+                
+                this.nodes.attr('transform', d => `translate(${d.x},${d.y})`);
+            }
+            
+            dragstarted(event, d) {
+                if (!event.active) this.simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+            
+            dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+            
+            dragended(event, d) {
+                if (!event.active) this.simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+            
+            nodeMouseover(event, d) {
+                // Show node info tooltip
+                this.nodeInfo.transition()
+                    .duration(200)
+                    .style('opacity', 0.9);
+                    
+                let content = `<h4>${d.name}</h4>`;
+                content += `<div>Type: ${d.type}</div>`;
+                content += `<div>Confidence: ${Math.round(d.confidence * 100)}%</div>`;
+                
+                if (d.type === 'test') {
+                    content += `<div>Status: ${d.status}</div>`;
+                    if (d.status === 'completed') {
+                        content += `<div>Result: ${d.result}</div>`;
+                    }
+                } else if (d.type === 'diagnosis') {
+                    content += `<div>Status: ${d.confirmedStatus}</div>`;
+                } else if (d.type === 'symptom' && d.severity) {
+                    content += `<div>Severity: ${d.severity}/10</div>`;
+                }
+                
+                this.nodeInfo.html(content)
+                    .style('left', (event.pageX + 10) + 'px')
+                    .style('top', (event.pageY - 28) + 'px');
+            }
+            
+            nodeMouseout() {
+                this.nodeInfo.transition()
+                    .duration(500)
+                    .style('opacity', 0);
+            }
+            
+            addSampleNetwork() {
+                this.system.createSampleNetwork();
+                this.updateGraph();
+                this.updateNodeList();
+                this.updateSystemHealthUI();
+                this.updateAnalyticsUI();
+                
+                // Hide empty state and show main buttons
+                document.getElementById('empty-state').classList.add('hidden');
+                document.getElementById('main-buttons').classList.remove('hidden');
+            }
+            
+            showTab(tabId) {
+                // Hide all tabs
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.add('hidden');
+                });
+                
+                // Show selected tab
+                document.getElementById(`${tabId}-tab`).classList.remove('hidden');
+                
+                // Update active button
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.add('active');
+                
+                // Update tab-specific content
+                if (tabId === 'analysis') {
+                    this.updateAnalyticsUI();
+                } else if (tabId === 'system') {
+                    this.updateSystemHealthUI();
+                    this.updateGlobalAuditUI();
+                }
+            }
+            
+            showAddNodeForm() {
+                document.getElementById('add-node-form').classList.remove('hidden');
+                document.getElementById('node-details').classList.add('hidden');
+                document.getElementById('empty-state').classList.add('hidden');
+                document.getElementById('add-connection-form').classList.add('hidden');
+                document.getElementById('edit-test-form').classList.add('hidden');
+                
+                // Reset form
+                document.getElementById('node-name').value = '';
+                document.getElementById('node-tf').value = 0.7;
+                document.getElementById('node-df').value = 0.3;
+                document.getElementById('node-type').value = 'symptom';
+                
+                // Update dynamic properties
+                this.updateDynamicProperties();
+            }
+            
+            hideAddNodeForm() {
+                document.getElementById('add-node-form').classList.add('hidden');
+                
+                // Show appropriate view
+                if (this.selectedNode) {
+                    document.getElementById('node-details').classList.remove('hidden');
+                } else if (this.system.nodeIds.length === 0) {
+                    document.getElementById('empty-state').classList.remove('hidden');
+                }
+            }
+            
+            updateDynamicProperties() {
+                const nodeType = document.getElementById('node-type').value;
+                const container = document.getElementById('dynamic-properties');
+                container.innerHTML = '';
+                
+                switch (nodeType) {
+                    case 'symptom':
+                        container.innerHTML = `
+                            <div class="form-group">
+                                <label for="symptom-severity">Severity (1-10)</label>
+                                <input type="number" id="symptom-severity" min="1" max="10" value="5">
+                            </div>
+                        `;
+                        break;
+                    case 'test':
+                        container.innerHTML = `
+                            <div class="form-group">
+                                <label for="test-status">Status</label>
+                                <select id="test-status">
+                                    <option value="pending">Pending</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                            </div>
+                        `;
+                        break;
+                    case 'diagnosis':
+                        container.innerHTML = `
+                            <div class="form-group">
+                                <label for="diagnosis-status">Status</label>
+                                <select id="diagnosis-status">
+                                    <option value="working">Working</option>
+                                    <option value="probable">Probable</option>
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="ruled-out">Ruled Out</option>
+                                </select>
+                            </div>
+                        `;
+                        break;
+                    case 'treatment':
+                        container.innerHTML = `
+                            <div class="form-group">
+                                <label for="treatment-status">Status</label>
+                                <select id="treatment-status">
+                                    <option value="proposed">Proposed</option>
+                                    <option value="active">Active</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="stopped">Stopped</option>
+                                </select>
+                            </div>
+                        `;
+                        break;
+                }
+            }
+            
+            saveNewNode() {
+                const name = document.getElementById('node-name').value.trim();
+                if (!name) {
+                    alert('Please enter a node name');
+                    return;
+                }
+                
+                const type = document.getElementById('node-type').value;
+                const tf = parseFloat(document.getElementById('node-tf').value);
+                const df = parseFloat(document.getElementById('node-df').value);
+                const color = document.getElementById('node-color').value;
+                
+                // Get type-specific properties
+                let properties = { tf, df };
+                
+                switch (type) {
+                    case 'symptom':
+                        properties.severity = parseInt(document.getElementById('symptom-severity').value);
+                        break;
+                    case 'test':
+                        properties.status = document.getElementById('test-status').value;
+                        break;
+                    case 'diagnosis':
+                        properties.confirmedStatus = document.getElementById('diagnosis-status').value;
+                        break;
+                    case 'treatment':
+                        properties.status = document.getElementById('treatment-status').value;
+                        break;
+                }
+                
+                // Create node
+                const node = this.system.createNode(name, type, properties);
+                
+                // Set custom color
+                node.visualProperties.color = color;
+                
+                // Update UI
+                this.updateGraph();
+                this.updateNodeList();
+                this.hideAddNodeForm();
+                this.selectNode(node);
+            }
+            
+            updateNodeList() {
+                const nodeList = document.getElementById('node-list');
+                nodeList.innerHTML = '';
+                
+                // Group nodes by type
+                const nodesByType = {
+                    'diagnosis': [],
+                    'symptom': [],
+                    'test': [],
+                    'treatment': [],
+                    'observation': []
+                };
+                
+                Object.values(this.system.nodes).forEach(node => {
+                    if (nodesByType[node.type]) {
+                        nodesByType[node.type].push(node);
+                    }
+                });
+                
+                // Add nodes to list by type
+                Object.entries(nodesByType).forEach(([type, nodes]) => {
+                    if (nodes.length > 0) {
+                        const typeHeading = document.createElement('h3');
+                        typeHeading.textContent = type.charAt(0).toUpperCase() + type.slice(1) + 's';
+                        nodeList.appendChild(typeHeading);
+                        
+                        nodes.sort((a, b) => b.confidence - a.confidence)
+                            .forEach(node => {
+                                const nodeItem = document.createElement('div');
+                                nodeItem.className = `node-item node-type-${node.type}`;
+                                nodeItem.setAttribute('data-id', node.id);
+                                if (this.selectedNode && this.selectedNode.id === node.id) {
+                                    nodeItem.classList.add('active');
+                                }
+                                
+                                // Add status indicator
+                                let statusClass = '';
+                                if (node.type === 'test') {
+                                    statusClass = `status-${node.status}`;
+                                } else if (node.type === 'diagnosis') {
+                                    statusClass = `status-${node.confirmedStatus}`;
+                                }
+                                
+                                nodeItem.innerHTML = `
+                                    <div class="node-color"></div>
+                                    <div class="node-name">
+                                        ${statusClass ? `<span class="status-indicator ${statusClass}"></span>` : ''}
+                                        ${node.name}
+                                    </div>
+                                    <div class="node-confidence">${Math.round(node.confidence * 100)}%</div>
+                                `;
+                                nodeItem.addEventListener('click', () => this.selectNode(node));
+                                nodeList.appendChild(nodeItem);
+                            });
+                    }
+                });
+                
+                // If no nodes, show message
+                if (Object.values(this.system.nodes).length === 0) {
+                    const emptyMessage = document.createElement('div');
+                    emptyMessage.className = 'empty-message';
+                    emptyMessage.textContent = 'No nodes created yet.';
+                    nodeList.appendChild(emptyMessage);
+                }
+            }
+            
+            toggleConnectionMode() {
+                this.connectionMode = !this.connectionMode;
+                this.connectionSource = null;
+                
+                const btn = document.getElementById('connection-mode-btn');
+                const container = document.getElementById('graph-container');
+                
+                if (this.connectionMode) {
+                    // Enter connection mode
+                    btn.classList.add('primary');
+                    btn.classList.remove('secondary');
+                    btn.innerText = 'Select Source Node';
+                    container.style.cursor = 'crosshair';
+                    
+                    // Show helper message
+                    const alert = document.createElement('div');
+                    alert.id = 'connection-alert';
+                    alert.className = 'alert';
+                    alert.innerHTML = 'Connection Mode: Click on a source node, then a target node';
+                    document.querySelector('.controls').prepend(alert);
+                } else {
+                    // Exit connection mode
+                    btn.classList.remove('primary');
+                    btn.classList.add('secondary');
+                    btn.innerText = 'Connect Nodes';
+                    container.style.cursor = 'default';
+                    
+                    // Remove helper message
+                    const alert = document.getElementById('connection-alert');
+                    if (alert) alert.remove();
+                }
+            }
+            
+            selectNode(node) {
+                // If in connection mode, handle creating connection
+                if (this.connectionMode) {
+                    if (!this.connectionSource) {
+                        // First node selection - set as source
+                        this.connectionSource = node;
+                        document.getElementById('connection-mode-btn').innerText = 'Select Target Node';
+                    } else {
+                        // Second node selection - create connection
+                        if (this.connectionSource.id !== node.id) {
+                            // Prompt for connection type
+                            const connectionType = prompt('Enter connection type:', 'reference');
+                            if (connectionType) {
+                                const weight = parseFloat(prompt('Enter connection weight (0-1):', '0.7'));
+                                const color = prompt('Enter connection color (hex code):', '#666666');
+                                
+                                // Create connection
+                                this.system.connectNodes(
+                                    this.connectionSource.id, 
+                                    node.id, 
+                                    connectionType, 
+                                    weight, 
+                                    { color: color }
+                                );
+                                
+                                // Update UI
+                                this.updateGraph();
+                            }
+                        } else {
+                            alert("Can't connect a node to itself");
+                        }
+                        
+                        // Reset connection mode
+                        this.toggleConnectionMode();
+                    }
+                    return;
+                }
+                
+                // Normal node selection mode
+                this.selectedNode = node;
+                
+                // Update node list selection
+                document.querySelectorAll('.node-item').forEach(item => {
+                    item.classList.remove('active');
+                    if (item.getAttribute('data-id') === node.id) {
+                        item.classList.add('active');
+                    }
+                });
+                
+                // Show node details
+                document.getElementById('node-details').classList.remove('hidden');
+                document.getElementById('add-node-form').classList.add('hidden');
+                document.getElementById('add-connection-form').classList.add('hidden');
+                document.getElementById('edit-test-form').classList.add('hidden');
+                document.getElementById('empty-state').classList.add('hidden');
+                
+                // Update details content
+                const detailsEl = document.getElementById('node-details');
+                
+                let statusDisplay = '';
+                if (node.type === 'test') {
+                    const statusClass = `status-${node.status}`;
+                    statusDisplay = `<span class="status-indicator ${statusClass}"></span> ${node.status}`;
+                    if (node.status === 'completed') {
+                        statusDisplay += `: ${node.result}`;
+                    }
+                } else if (node.type === 'diagnosis') {
+                    const statusClass = `status-${node.confirmedStatus}`;
+                    statusDisplay = `<span class="status-indicator ${statusClass}"></span> ${node.confirmedStatus}`;
+                } else if (node.type === 'treatment') {
+                    statusDisplay = node.status;
+                }
+                
+                let typeSpecificContent = '';
+                if (node.type === 'symptom' && node.severity) {
+                    typeSpecificContent = `
+                        <div class="property-row">
+                            <div class="property-label">Severity</div>
+                            <div class="property-value">${node.severity}/10</div>
+                        </div>
+                    `;
+                } else if (node.type === 'test' && node.status === 'pending') {
+                    typeSpecificContent = `
+                        <div class="button-group">
+                            <button id="edit-test-btn" class="success">Complete Test</button>
+                        </div>
+                    `;
+                }
+                
+                // Generate content for node details
+                detailsEl.innerHTML = `
+                    <h3>${node.name}</h3>
+                    <div class="property-group">
+                        <div class="property-row">
+                            <div class="property-label">Type</div>
+                            <div class="property-value">${node.type}</div>
+                        </div>
+                        <div class="property-row">
+                            <div class="property-label">Status</div>
+                            <div class="property-value">${statusDisplay}</div>
+                        </div>
+                        <div class="property-row">
+                            <div class="property-label">Confidence</div>
+                            <div class="property-value">${Math.round(node.confidence * 100)}%</div>
+                        </div>
+                        ${typeSpecificContent}
+                    </div>
+                    
+                    <h3>Node Factors</h3>
+                    <div class="property-group">
+                        <div class="property-row">
+                            <div class="property-label">Truth Factor</div>
+                            <div class="property-value">${node.tf.toFixed(2)}</div>
+                        </div>
+                        <div class="factor-bar">
+                            <div class="factor-fill tf-fill" style="width: ${node.tf * 100}%;"></div>
+                        </div>
+                        
+                        <div class="property-row">
+                            <div class="property-label">Deception Factor</div>
+                            <div class="property-value">${node.df.toFixed(2)}</div>
+                        </div>
+                        <div class="factor-bar">
+                            <div class="factor-fill df-fill" style="width: ${node.df * 100}%;"></div>
+                        </div>
+                        
+                        <div class="property-row">
+                            <div class="property-label">Stability Factor</div>
+                            <div class="property-value">${node.sf.toFixed(2)}</div>
+                        </div>
+                        <div class="factor-bar">
+                            <div class="factor-fill sf-fill" style="width: ${node.sf * 100}%;"></div>
+                        </div>
+                        
+                        <div class="property-row">
+                            <div class="property-label">Harmony Factor</div>
+                            <div class="property-value">${node.hf.toFixed(2)}</div>
+                        </div>
+                        <div class="factor-bar">
+                            <div class="factor-fill hf-fill" style="width: ${node.hf * 100}%;"></div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add sockets information
+                if (node.sockets.length > 0 || node.incomingSockets.length > 0) {
+                    let socketsContent = '<h3>Connections</h3><div class="socket-list">';
+                    
+                    // Outgoing connections
+                    node.sockets.forEach(socket => {
+                        const targetNode = this.system.nodes[socket.target];
+                        if (!targetNode) return;
+                        
+                        const socketClass = socket.fulfilled ? 'socket-fulfilled' : 'socket-pending';
+                        socketsContent += `
+                            <div class="socket-item ${socketClass}">
+                                <span class="socket-type">${socket.type}</span>
+                                <span class="socket-name">${targetNode.name} (${targetNode.type})</span>
+                                ${socket.mandatory ? '<span style="font-weight: bold;">*</span>' : ''}
+                            </div>
+                        `;
+                    });
+                    
+                    // Incoming connections
+                    node.incomingSockets.forEach(socket => {
+                        const sourceNode = this.system.nodes[socket.sourceId];
+                        if (!sourceNode) return;
+                        
+                        socketsContent += `
+                            <div class="socket-item">
+                                <span class="socket-type">from</span>
+                                <span class="socket-name">${sourceNode.name} (${sourceNode.type})</span>
+                            </div>
+                        `;
+                    });
+                    
+                    socketsContent += '</div>';
+                    detailsEl.innerHTML += socketsContent;
+                }
+                
+                // Add audit log
+                if (node.auditLog.length > 0) {
+                    let auditContent = '<h3>Audit Log</h3><div class="audit-list">';
+                    
+                    // Show latest 5 audit entries
+                    node.auditLog.slice(-5).reverse().forEach(entry => {
+                        auditContent += `
+                            <div class="audit-item">
+                                <span class="audit-time">${entry.timestamp}</span>
+                                <div>${entry.description}</div>
+                            </div>
+                        `;
+                    });
+                    
+                    auditContent += '</div>';
+                    detailsEl.innerHTML += auditContent;
+                }
+                
+                // Add event listeners for buttons
+                if (node.type === 'test' && node.status === 'pending') {
+                    document.getElementById('edit-test-btn').addEventListener('click', () => {
+                        this.showEditTestForm();
+                    });
+                }
+            }
+            
+            showConnectionForm() {
+                // Hide other forms
+                document.getElementById('add-node-form').classList.add('hidden');
+                document.getElementById('node-details').classList.add('hidden');
+                document.getElementById('empty-state').classList.add('hidden');
+                document.getElementById('edit-test-form').classList.add('hidden');
+                
+                // Show connection form
+                document.getElementById('add-connection-form').classList.remove('hidden');
+                
+                // Populate source and target dropdowns
+                const sourceSelect = document.getElementById('source-node');
+                const targetSelect = document.getElementById('target-node');
+                sourceSelect.innerHTML = '';
+                targetSelect.innerHTML = '';
+                
+                // Group nodes by type
+                const nodesByType = {};
+                Object.values(this.system.nodes).forEach(node => {
+                    if (!nodesByType[node.type]) {
+                        nodesByType[node.type] = [];
+                    }
+                    nodesByType[node.type].push(node);
+                });
+                
+                // Add option groups by type
+                Object.entries(nodesByType).forEach(([type, nodes]) => {
+                    const sourceGroup = document.createElement('optgroup');
+                    sourceGroup.label = type.charAt(0).toUpperCase() + type.slice(1) + 's';
+                    
+                    const targetGroup = document.createElement('optgroup');
+                    targetGroup.label = type.charAt(0).toUpperCase() + type.slice(1) + 's';
+                    
+                    nodes.forEach(node => {
+                        const sourceOption = document.createElement('option');
+                        sourceOption.value = node.id;
+                        sourceOption.textContent = node.name;
+                        sourceGroup.appendChild(sourceOption);
+                        
+                        const targetOption = document.createElement('option');
+                        targetOption.value = node.id;
+                        targetOption.textContent = node.name;
+                        targetGroup.appendChild(targetOption);
+                    });
+                    
+                    sourceSelect.appendChild(sourceGroup);
+                    targetSelect.appendChild(targetGroup);
+                });
+                
+                // If a node is selected, set it as source
+                if (this.selectedNode) {
+                    sourceSelect.value = this.selectedNode.id;
+                }
+            }
+            
+            hideConnectionForm() {
+                document.getElementById('add-connection-form').classList.add('hidden');
+                
+                // Show appropriate view
+                if (this.selectedNode) {
+                    document.getElementById('node-details').classList.remove('hidden');
+                } else if (this.system.nodeIds.length === 0) {
+                    document.getElementById('empty-state').classList.remove('hidden');
+                }
+            }
+            
+            saveNewConnection() {
+                const sourceId = document.getElementById('source-node').value;
+                const targetId = document.getElementById('target-node').value;
+                
+                if (sourceId === targetId) {
+                    alert('Cannot connect a node to itself');
+                    return;
+                }
+                
+                let connectionType = document.getElementById('connection-type').value;
+                const weight = parseFloat(document.getElementById('connection-weight').value);
+                const mandatory = document.getElementById('connection-mandatory').checked;
+                const connectionColor = document.getElementById('connection-color').value;
+                
+                // Handle custom connection type
+                if (connectionType === 'custom') {
+                    const customType = document.getElementById('custom-connection').value.trim();
+                    if (!customType) {
+                        alert('Please enter a custom connection type');
+                        return;
+                    }
+                    connectionType = customType;
+                }
+                
+                // Create connection
+                const result = this.system.connectNodes(sourceId, targetId, connectionType, weight, { 
+                    mandatory: mandatory,
+                    color: connectionColor
+                });
+                
+                if (result.success) {
+                    // Update UI
+                    this.updateGraph();
+                    this.hideConnectionForm();
+                    
+                    // If a node was selected, update its details
+                    if (this.selectedNode) {
+                        this.selectNode(this.system.nodes[this.selectedNode.id]);
+                    }
+                } else {
+                    alert('Failed to create connection: ' + result.error);
+                }
+            }
+            
+            showEditTestForm() {
+                if (!this.selectedNode || this.selectedNode.type !== 'test') {
+                    return;
+                }
+                
+                // Hide other forms
+                document.getElementById('add-node-form').classList.add('hidden');
+                document.getElementById('node-details').classList.add('hidden');
+                document.getElementById('add-connection-form').classList.add('hidden');
+                
+                // Show test form
+                document.getElementById('edit-test-form').classList.remove('hidden');
+                
+                // Set default values
+                document.getElementById('test-precision').value = this.selectedNode.precision || 0.9;
+            }
+            
+            hideTestForm() {
+                document.getElementById('edit-test-form').classList.add('hidden');
+                
+                // Show node details
+                if (this.selectedNode) {
+                    document.getElementById('node-details').classList.remove('hidden');
+                }
+            }
+            
+            completeTest() {
+                if (!this.selectedNode || this.selectedNode.type !== 'test') {
+                    return;
+                }
+                
+                const result = document.getElementById('test-result').value;
+                const precision = parseFloat(document.getElementById('test-precision').value);
+                
+                // Complete test
+                const updateResult = this.system.completeTest(this.selectedNode.id, result, precision);
+                
+                if (updateResult.success) {
+                    // Update UI
+                    this.updateGraph();
+                    this.hideTestForm();
+                    this.updateNodeList();
+                    this.updateSystemHealthUI();
+                    this.updateAnalyticsUI();
+                    
+                    // Select the updated node
+                    this.selectNode(this.system.nodes[this.selectedNode.id]);
+                } else {
+                    alert('Failed to complete test: ' + updateResult.error);
+                }
+            }
+            
+            applyTimePassage() {
+                const result = this.system.applyTemporalUpdates();
+                
+                if (result.updated) {
+                    // Update UI
+                    this.updateGraph();
+                    this.updateNodeList();
+                    this.updateSystemHealthUI();
+                    this.updateAnalyticsUI();
+                    this.updateGlobalAuditUI();
+                    
+                    // If a node was selected, update its details
+                    if (this.selectedNode) {
+                        this.selectNode(this.system.nodes[this.selectedNode.id]);
+                    }
+                }
+                
+                // Update time display
+                document.getElementById('sim-time').textContent = this.system.getFormattedTime();
+            }
+            
+            updateSystemHealthUI() {
+                // Update health metrics
+                document.getElementById('avg-tf-value').textContent = this.system.systemHealth.avgTruthFactor.toFixed(2);
+                document.getElementById('avg-tf-bar').style.width = `${this.system.systemHealth.avgTruthFactor * 100}%`;
+                
+                document.getElementById('avg-hf-value').textContent = this.system.systemHealth.avgHarmonyFactor.toFixed(2);
+                document.getElementById('avg-hf-bar').style.width = `${this.system.systemHealth.avgHarmonyFactor * 100}%`;
+                
+                const socketFulfillmentPercent = Math.round(this.system.systemHealth.socketFulfillment * 100);
+                document.getElementById('socket-fulfillment-value').textContent = `${socketFulfillmentPercent}%`;
+                document.getElementById('socket-fulfillment-bar').style.width = `${socketFulfillmentPercent}%`;
+                
+                // Update time display
+                document.getElementById('sim-time').textContent = this.system.getFormattedTime();
+            }
+            
+            updateGlobalAuditUI() {
+                const auditContainer = document.getElementById('global-audit');
+                auditContainer.innerHTML = '';
+                
+                this.system.globalAuditTrail.slice(-10).reverse().forEach(entry => {
+                    const auditItem = document.createElement('div');
+                    auditItem.className = 'audit-item';
+                    auditItem.innerHTML = `
+                        <span class="audit-time">${entry.timestamp}</span>
+                        <div>${entry.description}</div>
+                    `;
+                    auditContainer.appendChild(auditItem);
+                });
+            }
+            
+            updateAnalyticsUI() {
+                // Update top diagnoses
+                const diagnosesContainer = document.getElementById('diagnoses-list');
+                diagnosesContainer.innerHTML = '';
+                
+                if (this.system.analyticResults.topDiagnoses.length === 0) {
+                    diagnosesContainer.innerHTML = '<div class="empty-message">No diagnoses available.</div>';
+                } else {
+                    this.system.analyticResults.topDiagnoses.forEach((diagnosis, index) => {
+                        const diagnosisEl = document.createElement('div');
+                        diagnosisEl.className = 'node-item node-type-diagnosis';
+                        
+                        const statusClass = `status-${diagnosis.confirmedStatus}`;
+                        diagnosisEl.innerHTML = `
+                            <div class="node-color"></div>
+                            <div class="node-name">
+                                <span class="status-indicator ${statusClass}"></span>
+                                ${index + 1}. ${diagnosis.name}
+                            </div>
+                            <div class="node-confidence">${Math.round(diagnosis.confidence * 100)}%</div>
+                        `;
+                        diagnosisEl.addEventListener('click', () => {
+                            this.selectNode(this.system.nodes[diagnosis.id]);
+                            this.showTab('nodes');
+                        });
+                        diagnosesContainer.appendChild(diagnosisEl);
+                    });
+                }
+                
+                // Update critical tests
+                const testsContainer = document.getElementById('tests-list');
+                testsContainer.innerHTML = '';
+                
+                if (this.system.analyticResults.criticalTests.length === 0) {
+                    testsContainer.innerHTML = '<div class="empty-message">No critical tests identified.</div>';
+                } else {
+                    this.system.analyticResults.criticalTests.forEach(test => {
+                        const testEl = document.createElement('div');
+                        testEl.className = 'node-item node-type-test';
+                        testEl.innerHTML = `
+                            <div class="node-color"></div>
+                            <div class="node-name">${test.name}</div>
+                        `;
+                        testEl.addEventListener('click', () => {
+                            this.selectNode(this.system.nodes[test.id]);
+                            this.showTab('nodes');
+                        });
+                        testsContainer.appendChild(testEl);
+                    });
+                }
+                
+                // Update explanations
+                const explanationsContainer = document.getElementById('explanations-list');
+                explanationsContainer.innerHTML = '';
+                
+                if (this.system.analyticResults.explanations.length === 0) {
+                    explanationsContainer.innerHTML = '<div class="empty-message">No explanations available.</div>';
+                } else {
+                    this.system.analyticResults.explanations.forEach(explanation => {
+                        const explEl = document.createElement('div');
+                        explEl.className = 'node-item';
+                        explEl.style.cursor = 'default';
+                        explEl.innerHTML = `<div class="node-name">${explanation.explanation}</div>`;
+                        explanationsContainer.appendChild(explEl);
+                    });
+                }
+            }
+        }
+        
+        // Initialize the UI
+        const ui = new UIController();
+    </script>
+</body>
+</html>
