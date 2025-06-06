@@ -914,62 +914,7 @@
             </div>
             
             <div class="path-diagram">
-                <svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
-                    <defs>
-                        <style>
-                            .path-text { font-family: 'Arial', sans-serif; font-size: 14px; font-weight: bold; }
-                            .element-box { fill: #3498db; stroke: #2980b9; stroke-width: 2; }
-                            .negated-box { fill: #e74c3c; stroke: #c0392b; stroke-width: 2; }
-                            .element-text { fill: white; text-anchor: middle; dominant-baseline: middle; font-size: 12px; }
-                            .separator { fill: #34495e; text-anchor: middle; dominant-baseline: middle; font-size: 18px; font-weight: bold; }
-                            .arrow { stroke: #34495e; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
-                        </style>
-                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                            <polygon points="0 0, 10 3.5, 0 7" fill="#34495e" />
-                        </marker>
-                    </defs>
-                    
-                    <!-- Title -->
-                    <text x="250" y="20" class="path-text" text-anchor="middle" style="font-size: 16px; fill: #2c3e50;">Path Structure: /truth/!coherence/stability</text>
-                    
-                    <!-- Root slash -->
-                    <text x="30" y="80" class="separator">/</text>
-                    
-                    <!-- Truth element -->
-                    <rect x="50" y="60" width="80" height="35" rx="5" class="element-box"/>
-                    <text x="90" y="77.5" class="element-text">truth</text>
-                    
-                    <!-- Separator -->
-                    <text x="140" y="80" class="separator">/</text>
-                    
-                    <!-- !coherence element (negated) -->
-                    <rect x="160" y="60" width="80" height="35" rx="5" class="negated-box"/>
-                    <text x="200" y="77.5" class="element-text">!coherence</text>
-                    
-                    <!-- Separator -->
-                    <text x="250" y="80" class="separator">/</text>
-                    
-                    <!-- Stability element -->
-                    <rect x="270" y="60" width="80" height="35" rx="5" class="element-box"/>
-                    <text x="310" y="77.5" class="element-text">stability</text>
-                    
-                    <!-- Hierarchical arrows -->
-                    <line x1="90" y1="110" x2="90" y2="140" class="arrow"/>
-                    <line x1="200" y1="110" x2="200" y2="140" class="arrow"/>
-                    <line x1="310" y1="110" x2="310" y2="140" class="arrow"/>
-                    
-                    <!-- Inheritance labels -->
-                    <text x="90" y="155" class="element-text" style="fill: #34495e; font-size: 10px;">Base Truth</text>
-                    <text x="200" y="155" class="element-text" style="fill: #34495e; font-size: 10px;">Negated</text>
-                    <text x="310" y="155" class="element-text" style="fill: #34495e; font-size: 10px;">Derived</text>
-                    
-                    <!-- Legend -->
-                    <text x="40" y="180" style="font-size: 11px; fill: #34495e;">Legend:</text>
-                    <rect x="90" y="170" width="15" height="15" rx="2" class="element-box"/>
-                    <text x="115" y="180" style="font-size: 11px; fill: #34495e;">Positive Element</text>
-                    <rect x="240" y="170" width="15" height="15" rx="2" class="negated-box"/>
-                    <text x="265" y="180" style="font-size: 11px; fill: #34495e;">Negated Element</text>
-                </svg>
+                <img src="/api/placeholder/500/200" alt="Path structure diagram showing hierarchical relationships between elements">
                 <p><em>Figure 2.1: Visual representation of a path structure</em></p>
             </div>
             
@@ -1159,71 +1104,7 @@
             </ol>
             
             <div class="path-diagram">
-                <svg viewBox="0 0 500 300" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
-                    <defs>
-                        <style>
-                            .res-text { font-family: 'Arial', sans-serif; font-size: 12px; }
-                            .res-element-box { fill: #3498db; stroke: #2980b9; stroke-width: 2; }
-                            .res-negated-box { fill: #e74c3c; stroke: #c0392b; stroke-width: 2; }
-                            .res-love-box { fill: #9b59b6; stroke: #8e44ad; stroke-width: 2; }
-                            .res-element-text { fill: white; text-anchor: middle; dominant-baseline: middle; font-size: 11px; font-weight: bold; }
-                            .res-separator { fill: #34495e; text-anchor: middle; dominant-baseline: middle; font-size: 16px; font-weight: bold; }
-                            .res-arrow { stroke: #34495e; stroke-width: 3; fill: none; marker-end: url(#res-arrowhead); }
-                            .res-love-arrow { stroke: #9b59b6; stroke-width: 2; fill: none; marker-end: url(#love-arrowhead); }
-                        </style>
-                        <marker id="res-arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                            <polygon points="0 0, 10 3.5, 0 7" fill="#34495e" />
-                        </marker>
-                        <marker id="love-arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                            <polygon points="0 0, 10 3.5, 0 7" fill="#9b59b6" />
-                        </marker>
-                    </defs>
-                    
-                    <!-- Title -->
-                    <text x="250" y="20" class="res-text" text-anchor="middle" style="font-size: 16px; fill: #2c3e50; font-weight: bold;">Resolution Process with Love</text>
-                    
-                    <!-- Original Path -->
-                    <text x="25" y="50" class="res-text" style="font-weight: bold; fill: #34495e;">Original:</text>
-                    <text x="25" y="70" class="res-separator">/</text>
-                    <rect x="35" y="55" width="60" height="25" rx="3" class="res-element-box"/>
-                    <text x="65" y="67.5" class="res-element-text">truth</text>
-                    <text x="105" y="70" class="res-separator">/</text>
-                    <rect x="115" y="55" width="80" height="25" rx="3" class="res-negated-box"/>
-                    <text x="155" y="67.5" class="res-element-text">!stability</text>
-                    
-                    <!-- Love presence indicator -->
-                    <rect x="350" y="45" width="60" height="30" rx="5" class="res-love-box"/>
-                    <text x="380" y="62" class="res-element-text">LOVE</text>
-                    <text x="380" y="85" class="res-text" text-anchor="middle" style="fill: #8e44ad; font-weight: bold;">Present</text>
-                    
-                    <!-- Love arrow pointing to negated element -->
-                    <line x1="350" y1="60" x2="200" y2="60" class="res-love-arrow"/>
-                    <text x="275" y="55" class="res-text" style="fill: #9b59b6; font-size: 10px;">Healing Force</text>
-                    
-                    <!-- Resolution arrow -->
-                    <line x1="250" y1="100" x2="250" y2="140" class="res-arrow"/>
-                    <text x="260" y="120" class="res-text" style="fill: #34495e; font-weight: bold;">Resolution</text>
-                    
-                    <!-- Resolved Path -->
-                    <text x="25" y="170" class="res-text" style="font-weight: bold; fill: #34495e;">Resolved:</text>
-                    <text x="25" y="190" class="res-separator">/</text>
-                    <rect x="35" y="175" width="60" height="25" rx="3" class="res-element-box"/>
-                    <text x="65" y="187.5" class="res-element-text">truth</text>
-                    <text x="105" y="190" class="res-separator">/</text>
-                    <rect x="115" y="175" width="70" height="25" rx="3" class="res-element-box"/>
-                    <text x="150" y="187.5" class="res-element-text">stability</text>
-                    
-                    <!-- Healing indicator -->
-                    <rect x="350" y="165" width="100" height="30" rx="5" style="fill: #27ae60; stroke: #229954; stroke-width: 2;"/>
-                    <text x="400" y="182" class="res-element-text" style="fill: white;">HEALING</text>
-                    <text x="400" y="205" class="res-text" text-anchor="middle" style="fill: #27ae60; font-weight: bold;">Complete</text>
-                    
-                    <!-- Process steps -->
-                    <text x="25" y="230" class="res-text" style="font-weight: bold; fill: #2c3e50;">Process:</text>
-                    <text x="25" y="250" class="res-text" style="fill: #34495e;">1. Check love presence: λ(p) = 1</text>
-                    <text x="25" y="265" class="res-text" style="fill: #34495e;">2. Identify negations: {!stability}</text>
-                    <text x="25" y="280" class="res-text" style="fill: #34495e;">3. Transform: !stability → stability</text>
-                </svg>
+                <img src="/api/placeholder/500/300" alt="Resolution process diagram showing transformation of negated paths">
                 <p><em>Figure 3.1: Visual representation of the resolution process</em></p>
             </div>
         </div>
